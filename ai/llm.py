@@ -75,32 +75,90 @@ class LLMClient:
                 details={"provider": settings.provider},
             )
 
+        try:
+            import anthropic
+        except ImportError:
+            anthropic = None
+
+        if anthropic is None:
+            raise NotImplementedError("Anthropic SDK is not installed.")
+            
         started = time.perf_counter()
         model = self.model_for(tier)
 
-        # ------------------------------------------------------------------
-        # TODO(Developer 1): implement the provider adapter here.
-        #
-        # For Anthropic:
-        #   1. `pip install anthropic` (uncomment it in requirements.txt)
-        #   2. client = anthropic.AsyncAnthropic(api_key=settings.api_key)
-        #   3. Ask for JSON via a tool definition rather than by asking nicely
-        #      in the prompt — structured output that validates first time is
-        #      worth far more than a retry loop.
-        #   4. Parse into the caller's Pydantic model; raise
-        #      MalformedModelOutputError on a validation failure so the caller
-        #      can retry once with a repair prompt.
-        #   5. Fill RunMetadata from the response usage block and return.
-        #
-        # Keep the raising branches below — an unimplemented provider must fail
-        # loudly here, not silently return something plausible.
-        # ------------------------------------------------------------------
-        _ = (prompt, prompt_version, max_tokens, media_path, started, model)
+        client = anthropic.AsyncAnthropic(api_key=settings.api_key)
+        
+        content = []
+        if tier == "multimodal" and media_path:
+            import base64
+            from pathlib import Path
+            m_path = Path(media_path)
+            if m_path.is_dir():
+                frames = sorted(list(m_path.glob("*.jpg")) + list(m_path.glob("*.jpeg")))
+                for f in frames:
+                    with open(f, "rb") as fp:
+                        encoded = base64.b64encode(fp.read()).decode("utf-8")
+                    content.append({
+                        "type": "image",
+                        "source": {
+                            "type": "base64",
+                            "media_type": "image/jpeg",
+                            "data": encoded,
+                        }
+                    })
+                    
+        content.append({
+            "type": "text",
+            "text": prompt
+        })
 
-        raise NotImplementedError(
-            f"Provider '{settings.provider}' is not implemented yet. "
-            "Implement LLMClient.complete_json in ai/llm.py."
+        generic_tool = {
+            "name": "return_json",
+            "description": "Return the requested JSON structure",
+            "input_schema": {
+                "type": "object",
+                "properties": {
+                    "response": {
+                        "type": "object",
+                        "description": "The generic JSON payload."
+                    }
+                },
+                "required": ["response"]
+            }
+        }
+
+        try:
+            res = await client.messages.create(
+                model=model,
+                max_tokens=max_tokens,
+                messages=[{"role": "user", "content": content}],
+                tools=[generic_tool],
+                tool_choice={"type": "tool", "name": "return_json"},
+            )
+        except Exception as e:
+            raise ReelLabAIError(f"Anthropic API call failed: {str(e)}") from e
+
+        tool_call = next((block for block in res.content if block.type == "tool_use" and block.name == "return_json"), None)
+        if not tool_call:
+            raise MalformedModelOutputError("Model did not return the expected tool call.")
+
+        data = tool_call.input.get("response")
+        if data is None:
+            raise MalformedModelOutputError("Model returned tool call without 'response' field.")
+            
+        if not isinstance(data, dict):
+            raise MalformedModelOutputError("Model returned non-dictionary response.")
+
+        metadata = self.metadata_for(
+            model=model,
+            prompt_version=prompt_version,
+            started=started,
+            usage={
+                "input_tokens": res.usage.input_tokens,
+                "output_tokens": res.usage.output_tokens,
+            }
         )
+        return LLMResult(data=data, metadata=metadata)
 
     @staticmethod
     def metadata_for(

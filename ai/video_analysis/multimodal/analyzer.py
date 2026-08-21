@@ -32,17 +32,21 @@ PROMPT_VERSION = "content-dna-v0"
 HOOK_WINDOW_SECONDS = 3.0
 
 
+from video_analysis.preprocessing.preprocessing import extract_media
+from video_analysis.transcription.transcription import transcribe, Transcript
+from errors import TranscriptionFailedError, MalformedModelOutputError
+
 def _build_prompt(transcript: str, duration_seconds: float) -> str:
     return f"""You are analysing a short-form vertical video for a creator tool.
 
 Duration: {duration_seconds:.1f}s
 Transcript: {transcript or "(no speech detected)"}
 
-The attached frames are sampled in order across the video.
+The attached frames are sampled in chronological order across the video. Use this sequence to understand scene progression. Do not fabricate precision beyond what the available sampled timestamps support.
 
 Describe this reel as structured data. In particular:
 
-- The hook: what happens in the first {HOOK_WINDOW_SECONDS:.0f} seconds, how long
+- The hook: pay particular attention to the first sampled frames because they represent the opening/hook. Describe what happens in the first {HOOK_WINDOW_SECONDS:.0f} seconds, how long
   it actually runs before the payoff starts, what type of hook it is, and how
   strong it is (0-1). Be harsh about hooks that state a category instead of a
   stake.
@@ -61,20 +65,26 @@ Return JSON matching the ContentDNA schema."""
 
 
 async def _analyze_with_model(video_path: str, video_id: str) -> ContentDNA:
-    # TODO(Developer 2): extract media and transcript first, then pass the frames
-    # to the multimodal model as image blocks alongside this prompt.
-    #
-    #   media = extract_media(video_path)
-    #   transcript = transcribe(media.audio_path)
-    #   ... send media.frame_paths as image content blocks ...
-    result = await llm.complete_json(
-        prompt=_build_prompt(transcript="", duration_seconds=0.0),
-        prompt_version=PROMPT_VERSION,
-        tier="multimodal",
-        media_path=video_path,
-    )
-    dna = ContentDNA.model_validate(result.data)
-    return dna.model_copy(update={"video_id": video_id})
+    with extract_media(video_path) as media:
+        try:
+            transcript = transcribe(media.audio_path)
+        except TranscriptionFailedError as e:
+            logger.warning("Transcription failed, continuing with visual analysis only. Error: %s", str(e))
+            transcript = Transcript(text="")
+            
+        result = await llm.complete_json(
+            prompt=_build_prompt(transcript=transcript.text, duration_seconds=media.duration_seconds),
+            prompt_version=PROMPT_VERSION,
+            tier="multimodal",
+            media_path=str(media.frame_paths[0].parent),
+        )
+        
+        try:
+            dna = ContentDNA.model_validate(result.data)
+        except Exception as e:
+            raise MalformedModelOutputError(f"Validation failed for ContentDNA: {str(e)}") from e
+            
+        return dna.model_copy(update={"video_id": video_id})
 
 
 def _fixture_dna(video_id: str) -> ContentDNA:
