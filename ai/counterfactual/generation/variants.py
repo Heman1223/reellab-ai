@@ -80,16 +80,11 @@ Lever for this experiment: {modification_type}
 {MODIFICATION_BRIEFS.get(modification_type, "")}
 {f"Creator's steer: {instruction}" if instruction else ""}
 
-Change *only* what this lever allows — a variant that changes several things at
-once cannot be attributed to any one of them, and the comparison becomes
-worthless.
-
-For each variant give: a short label, what changed and why it addresses the
-bottleneck above, the concrete new asset (the actual rewritten line, not a
-description of one), and the Content DNA the reel would have after the change.
-
-Make the variants genuinely different from each other. Two rephrasings of the
-same idea waste a simulation run.
+CRITICAL RULES:
+1. Change *only* what this lever allows. If modifying the CTA, do not redesign the whole reel. If modifying the hook, do not arbitrarily alter unrelated properties. If modifying pacing, focus strictly on pacing/cuts/timing.
+2. A variant that changes several unrelated things at once cannot be attributed to any one of them, rendering the comparison worthless.
+3. For each variant give: a short label, what changed and why it addresses the bottleneck above, the concrete new asset (the actual rewritten line, not a description of one), and the predicted Content DNA the reel would have after the change.
+4. Make the variants genuinely different from each other. Two rephrasings of the same idea waste a simulation run.
 
 Return JSON matching a list of the Variant schema."""
 

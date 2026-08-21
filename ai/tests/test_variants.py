@@ -47,6 +47,41 @@ async def test_variant_generation_count(mock_pipeline, monkeypatch, dummy_inputs
 
 
 @pytest.mark.asyncio
+async def test_variant_zero_count(mock_pipeline, monkeypatch, dummy_inputs):
+    monkeypatch.setattr("config.settings.provider", "anthropic")
+    monkeypatch.setattr("config.settings.api_key", "test")
+    
+    content, sim = dummy_inputs
+    variants, mock = await generate_variants(content, sim, modification_type="hook", count=0)
+    
+    assert mock is False
+    assert len(variants) == 0
+
+
+@pytest.mark.asyncio
+async def test_modification_type_prompt_injection(monkeypatch, dummy_inputs):
+    monkeypatch.setattr("config.settings.provider", "anthropic")
+    monkeypatch.setattr("config.settings.api_key", "test")
+    
+    prompt_captured = None
+    
+    async def mock_complete_json(prompt, *args, **kwargs):
+        nonlocal prompt_captured
+        prompt_captured = prompt
+        return MockLLMResult([])
+        
+    class MockLLM:
+        complete_json = mock_complete_json
+        
+    monkeypatch.setattr(mod, "llm", MockLLM())
+    content, sim = dummy_inputs
+    
+    await generate_variants(content, sim, modification_type="cta", count=1)
+    assert "cta" in prompt_captured
+    assert "CRITICAL RULES" in prompt_captured
+
+
+@pytest.mark.asyncio
 async def test_variant_malformed_output(monkeypatch, dummy_inputs):
     monkeypatch.setattr("config.settings.provider", "anthropic")
     monkeypatch.setattr("config.settings.api_key", "test")

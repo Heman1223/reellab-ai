@@ -42,25 +42,33 @@ def _build_prompt(transcript: str, duration_seconds: float) -> str:
 Duration: {duration_seconds:.1f}s
 Transcript: {transcript or "(no speech detected)"}
 
-The attached frames are sampled in chronological order across the video. Use this sequence to understand scene progression. Do not fabricate precision beyond what the available sampled timestamps support.
+The attached frames are sampled in chronological order across the video. Use this sequence and the transcript to understand scene progression. Do not fabricate precision beyond what the available sampled timestamps support.
 
-Describe this reel as structured data. In particular:
+Describe this reel as structured data. Follow these strict rules:
 
-- The hook: pay particular attention to the first sampled frames because they represent the opening/hook. Describe what happens in the first {HOOK_WINDOW_SECONDS:.0f} seconds, how long
-  it actually runs before the payoff starts, what type of hook it is, and how
-  strong it is (0-1). Be harsh about hooks that state a category instead of a
-  stake.
-- Scenes: start and end times, what happens, shot type, visual energy.
-- Tone and dominant emotion.
-- Visual features: cuts per second, whether readable on-screen text is present,
-  how much of the runtime shows a face.
-- The CTA: whether there is one, what it asks for, and when it appears.
-- Warnings: anything that will cost this reel viewers, e.g. no captions over the
-  hook, or a hook longer than the decision window.
+1. Topic, Tone, & Emotion: Infer these holistically from the transcript and visual cues.
+2. The Hook: Focus on the first {HOOK_WINDOW_SECONDS:.0f} seconds (early frames + start of transcript).
+   - Determine what the attention mechanism is.
+   - Set 'type' to a clear category (e.g. "question", "statement", "visual_surprise", "negative_hook", "story_start").
+   - Set 'strength' (0-1). Be harsh if the hook just states a category without stakes.
+3. Scenes: Identify meaningful scene boundaries.
+   - Start and end times must be chronological, within 0 and {duration_seconds:.1f}.
+   - Connect descriptions to the transcript where possible.
+   - Do not hallucinate timestamps.
+4. Visual Features:
+   - Estimate cuts per second.
+   - Note if there is readable on-screen text.
+   - Estimate the proportion of runtime showing a human face (0-1).
+5. The CTA (Call to Action): Use the tail of the transcript and final frames.
+   - explicit CTA: directly asking for something.
+   - implicit CTA: hinting or directing without a direct ask.
+   - no CTA: 'present' is false.
+   - If present, 'type' MUST be one of: "follow", "comment", "share", "save", "link", "other".
+6. Audio Features:
+   - Note whether music is present. Rate the energy (0-1).
+   - (Speech presence and WPM are computed deterministically and will override your output, but provide sensible defaults).
 
-Describe what is there. Do not rate the video or predict its performance — that
-is the simulation's job, not yours.
-
+Describe what is there. Do not rate the video or predict its performance.
 Return JSON matching the ContentDNA schema."""
 
 

@@ -20,7 +20,7 @@ from dataclasses import dataclass
 from typing import Any, Awaitable, Callable, TypeVar
 
 from config import settings
-from errors import AINotConfiguredError, MalformedModelOutputError, ReelLabAIError
+from errors import AINotConfiguredError, MalformedModelOutputError, ReelLabAIError, ModelTimeoutError
 from logging_utils import get_logger, log_event
 from schemas import RunMetadata
 
@@ -135,6 +135,8 @@ class LLMClient:
                 tools=[generic_tool],
                 tool_choice={"type": "tool", "name": "return_json"},
             )
+        except anthropic.APITimeoutError as e:
+            raise ModelTimeoutError(f"Anthropic API timed out: {str(e)}") from e
         except Exception as e:
             raise ReelLabAIError(f"Anthropic API call failed: {str(e)}") from e
 
