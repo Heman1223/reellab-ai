@@ -35,10 +35,10 @@ import type { ApiResult } from '@/services/apiClient';
  */
 
 export async function discoverAudience(
-  request: AudienceRequest,
+  request: Partial<AudienceRequest>,
 ): Promise<ApiResult<AudienceGraph>> {
   if (USE_MOCKS) {
-    return delay({ data: { ...mockAudienceGraph, request }, mock: true }, 700);
+    return delay({ data: { ...mockAudienceGraph, request: request as AudienceRequest }, mock: true }, 700);
   }
   return apiClient.post<AudienceGraph>('/audience/discover', request);
 }

@@ -8,41 +8,26 @@ import { withFixtureFallback } from './fallback';
 import { COLLECTIONS, memoryStore } from './store';
 import type { Resolved } from './fallback';
 
-const REQUIRED_FIELDS: (keyof AudienceRequest)[] = [
-  'niche',
-  'targetAudience',
-  'location',
-  'language',
-  'creatorGoal',
-];
-
-/**
- * Validate the creator's brief. This is the only input the whole pipeline
- * receives, so a bad one here poisons everything downstream — reject early.
- */
 export function parseAudienceRequest(body: unknown): AudienceRequest {
   if (typeof body !== 'object' || body === null) {
     throw ApiError.validation('Request body must be a JSON object.');
   }
 
   const raw = body as Record<string, unknown>;
-  const missing = REQUIRED_FIELDS.filter(
-    (field) => typeof raw[field] !== 'string' || (raw[field] as string).trim() === '',
-  );
 
-  if (missing.length > 0) {
-    throw ApiError.validation('Missing or empty required fields.', { missing });
-  }
+  const targetAudience = typeof raw.targetAudience === 'string' && raw.targetAudience.trim() !== ''
+    ? raw.targetAudience.trim()
+    : 'General audience';
 
   return {
-    niche: String(raw.niche).trim(),
-    targetAudience: String(raw.targetAudience).trim(),
+    niche: typeof raw.niche === 'string' && raw.niche.trim() !== '' ? raw.niche.trim() : 'General',
+    targetAudience,
     ...(typeof raw.secondaryAudience === 'string' && raw.secondaryAudience.trim() !== ''
       ? { secondaryAudience: raw.secondaryAudience.trim() }
       : {}),
-    location: String(raw.location).trim(),
-    language: String(raw.language).trim(),
-    creatorGoal: String(raw.creatorGoal).trim(),
+    location: typeof raw.location === 'string' && raw.location.trim() !== '' ? raw.location.trim() : 'Global',
+    language: typeof raw.language === 'string' && raw.language.trim() !== '' ? raw.language.trim() : 'English',
+    creatorGoal: typeof raw.creatorGoal === 'string' && raw.creatorGoal.trim() !== '' ? raw.creatorGoal.trim() : 'Grow audience and increase engagement',
   };
 }
 

@@ -1,16 +1,11 @@
 import { Badge, Card, EmptyState, MockBanner, PageHeader, ScoreBar } from '@/components/ui';
 import { useLabState } from '@/hooks/useLabState';
-import { mockSimulationResult, personaById } from '@/mock';
+import { personaById } from '@/mock';
 import { percent, seconds } from '@/utils/format';
 import type { PersonaSimulationResult, ViewerAction } from '@/types';
 
 /**
  * Individual synthetic viewers and what each of them did.
- *
- * The `reason` is the most important thing on this page. It is the difference
- * between "your reel scored 0.38" and "Karan left at 2.6 seconds because
- * nothing happened" — the second is something a creator can act on, and it is
- * the reason the simulation reasons rather than scores.
  */
 const ACTION_TONE: Record<ViewerAction, 'strong' | 'mixed' | 'weak'> = {
   swipe: 'weak',
@@ -24,13 +19,15 @@ const ACTION_TONE: Record<ViewerAction, 'strong' | 'mixed' | 'weak'> = {
 
 export default function PersonaResultsPage() {
   const { simulation } = useLabState();
-  const result = simulation ?? mockSimulationResult;
-  const isMock = simulation === null || (result.metadata?.mock ?? false);
+  
+  if (!simulation) return null;
+  const result = simulation;
+  const isMock = result.metadata?.mock ?? false;
 
   return (
-    <>
+    <div className="animate-in fade-in slide-in-from-bottom-4 duration-700">
       <PageHeader
-        title="Persona Results"
+        title="Individual Viewers"
         description="Every synthetic viewer's decision, in their own words."
       />
 
@@ -39,38 +36,52 @@ export default function PersonaResultsPage() {
       {result.audienceResults.length === 0 ? (
         <EmptyState title="No persona results." hint="Run a simulation first." />
       ) : (
-        <div className="space-y-4">
+        <div className="grid gap-6 md:grid-cols-2 mt-6">
           {result.audienceResults.map((reaction) => (
             <PersonaCard key={reaction.personaId} reaction={reaction} />
           ))}
         </div>
       )}
-    </>
+    </div>
   );
 }
 
+function extractNameFromId(id: string): string {
+  // AI service generates slug IDs like segment__name_1
+  const parts = id.split('__');
+  if (parts.length > 1) {
+    const namePart = parts[1].split('_')[0];
+    if (namePart) {
+      return namePart.charAt(0).toUpperCase() + namePart.slice(1);
+    }
+  }
+  return id;
+}
+
 function PersonaCard({ reaction }: { reaction: PersonaSimulationResult }) {
-  const persona = personaById(reaction.personaId);
+  // If we have mock data, use it for rich demographics, otherwise parse the ID
+  const mockPersona = personaById(reaction.personaId);
   const failed = reaction.error !== undefined;
+  
+  const displayName = mockPersona?.name ?? extractNameFromId(reaction.personaId);
+  const demographic = mockPersona?.demographicSummary ?? `Synthetic Viewer (${reaction.personaId.split('__')[0]})`;
 
   return (
-    <Card className={failed ? 'opacity-60' : undefined}>
-      <header className="mb-3 flex flex-wrap items-start justify-between gap-3">
+    <Card className={failed ? 'opacity-60 border-red-900/50' : 'border-ink-700 bg-ink-800/80'}>
+      <header className="mb-4 flex flex-wrap items-start justify-between gap-3 border-b border-ink-700/50 pb-4">
         <div>
-          <h3 className="text-sm font-semibold text-slate-900">
-            {persona?.name ?? reaction.personaId}
+          <h3 className="text-base font-bold text-slate-200">
+            {displayName}
           </h3>
-          {persona && (
-            <p className="mt-0.5 text-xs text-slate-500">{persona.demographicSummary}</p>
-          )}
+          <p className="mt-1 text-xs text-slate-500">{demographic}</p>
         </div>
-        <div className="flex items-center gap-2">
-          <Badge verdict={ACTION_TONE[reaction.action]}>{reaction.action}</Badge>
+        <div className="flex items-center gap-3">
           {reaction.swipeTime !== null && (
-            <span className="font-mono text-xs text-slate-500">
-              left at {seconds(reaction.swipeTime)}
+            <span className="rounded-md bg-ink-900 px-2 py-1 font-mono text-xs text-slate-400">
+              Left at {seconds(reaction.swipeTime)}
             </span>
           )}
+          <Badge verdict={ACTION_TONE[reaction.action]}>{reaction.action.toUpperCase()}</Badge>
         </div>
       </header>
 
@@ -80,11 +91,11 @@ function PersonaCard({ reaction }: { reaction: PersonaSimulationResult }) {
         </p>
       ) : (
         <>
-          <blockquote className="border-l-2 border-ink-500 pl-4 text-sm italic leading-relaxed text-slate-700">
+          <blockquote className="mb-6 rounded-r-lg border-l-4 border-accent/70 bg-accent/5 p-4 text-sm italic leading-relaxed text-slate-300">
             “{reaction.reason}”
           </blockquote>
 
-          <div className="mt-4 grid gap-3 sm:grid-cols-3">
+          <div className="grid gap-x-6 gap-y-4 sm:grid-cols-2">
             <ScoreBar value={reaction.watchProbability} label="Watch" />
             <ScoreBar value={reaction.completionProbability} label="Complete" />
             <ScoreBar value={reaction.shareProbability} label="Share" />
@@ -92,10 +103,6 @@ function PersonaCard({ reaction }: { reaction: PersonaSimulationResult }) {
             <ScoreBar value={reaction.likeProbability} label="Like" />
             <ScoreBar value={reaction.commentProbability} label="Comment" />
           </div>
-
-          <p className="mt-3 text-xs text-slate-500">
-            Confidence {percent(reaction.confidence)}
-          </p>
         </>
       )}
     </Card>

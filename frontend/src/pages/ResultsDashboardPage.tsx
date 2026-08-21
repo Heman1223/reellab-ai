@@ -8,41 +8,54 @@ import {
   StatTile,
 } from '@/components/ui';
 import { useLabState } from '@/hooks/useLabState';
-import { mockSimulationResult } from '@/mock';
 import { percent, score } from '@/utils/format';
 import type { AudienceSegmentResult, Bottleneck } from '@/types';
 
 /**
  * Step 5 — the results dashboard.
- *
- * Ordering is a product decision: the bottlenecks come before the segment
- * breakdown, and the headline score is a single small tile among several. The
- * score is one output; the diagnosis is the product.
  */
 export default function ResultsDashboardPage() {
   const { simulation } = useLabState();
-  const result = simulation ?? mockSimulationResult;
-  const isMock = simulation === null || (result.metadata?.mock ?? false);
+  
+  if (!simulation) return null;
+  const result = simulation;
+  const isMock = result.metadata?.mock ?? false;
 
   const strong = result.audienceSegmentResults.filter((s) => s.verdict === 'strong');
   const weak = result.audienceSegmentResults.filter((s) => s.verdict === 'weak');
 
   return (
-    <>
+    <div className="animate-in fade-in slide-in-from-bottom-4 duration-700">
       <PageHeader
-        title="Results"
+        title="Simulation Results"
         description="Where this reel works, where it does not, and why."
         action={<Badge>{result.status}</Badge>}
       />
 
       <MockBanner mock={isMock} />
 
-      <div className="grid gap-3 sm:grid-cols-4">
-        <StatTile label="Overall" value={score(result.overallScore)} hint="0–1, reach-weighted" />
+      {/* Virality Potential Meter */}
+      <div className="mb-8 mt-6 relative overflow-hidden rounded-2xl border border-ink-700 bg-gradient-to-br from-ink-800 to-ink-900 p-8 shadow-2xl">
+        <div className="pointer-events-none absolute -right-20 -top-20 rounded-full bg-accent/20 p-40 blur-3xl" />
+        <h3 className="mb-2 text-xs font-bold uppercase tracking-wider text-slate-400">
+          Virality Potential
+        </h3>
+        <div className="flex items-baseline gap-3">
+          <span className="bg-gradient-to-br from-accent to-purple-500 bg-clip-text text-7xl font-black tracking-tight text-transparent">
+            {(result.overallScore * 100).toFixed(0)}
+          </span>
+          <span className="text-2xl font-medium text-slate-600">/ 100</span>
+        </div>
+        <p className="mt-4 max-w-2xl text-sm leading-relaxed text-slate-400">
+          Simulated algorithmic spread potential. Based on reach-weighted completion and share rates across all target segments.
+        </p>
+      </div>
+
+      <div className="grid gap-4 sm:grid-cols-3">
         <StatTile label="Confidence" value={percent(result.confidence)} hint="sample-adjusted" />
-        <StatTile label="Personas" value={String(result.audienceResults.length)} />
+        <StatTile label="Personas Simulated" value={String(result.audienceResults.length)} />
         <StatTile
-          label="Waves"
+          label="Propagation Waves"
           value={String(result.propagationWaves.length)}
           hint={result.propagationWaves.at(-1)?.terminated ? 'cascade died' : 'still spreading'}
         />
@@ -54,9 +67,9 @@ export default function ResultsDashboardPage() {
         subtitle="Where the reel loses people, and the model's hypothesis for why"
       >
         {result.bottlenecks.length === 0 ? (
-          <p className="text-sm text-slate-500">No bottlenecks identified.</p>
+          <p className="text-sm text-slate-500">No bottlenecks identified. Excellent retention.</p>
         ) : (
-          <ul className="space-y-4">
+          <ul className="space-y-6">
             {[...result.bottlenecks]
               .sort((a, b) => b.severity - a.severity)
               .map((bottleneck) => (
@@ -66,7 +79,7 @@ export default function ResultsDashboardPage() {
         )}
       </Card>
 
-      <div className="mt-6 grid gap-4 md:grid-cols-2">
+      <div className="mt-6 grid gap-6 md:grid-cols-2">
         <Card title="Performs well" subtitle={`${strong.length} segment(s)`}>
           <SegmentList segments={strong} empty="No segment scored as strong." />
         </Card>
@@ -75,46 +88,52 @@ export default function ResultsDashboardPage() {
         </Card>
       </div>
 
-      <Card className="mt-6" title="All segments">
+      <Card className="mt-6" title="All Audience Segments">
         <SegmentList segments={result.audienceSegmentResults} empty="No segment results." />
       </Card>
 
       {result.warnings.length > 0 && (
-        <Card className="mt-6" title="Warnings">
-          <ul className="space-y-1.5 text-sm">
+        <Card className="mt-6 border-amber-900/50 bg-amber-950/10" title="Hidden Opportunities & Warnings">
+          <ul className="space-y-2 text-sm">
             {result.warnings.map((warning) => (
-              <li key={warning.code} className="flex gap-3">
-                <span className="font-mono text-xs text-slate-500">{warning.code}</span>
-                <span className="text-slate-400">{warning.message}</span>
+              <li key={warning.code} className="flex items-start gap-3">
+                <span className="mt-0.5 shrink-0 rounded bg-amber-500/20 px-1.5 py-0.5 font-mono text-xs text-amber-500">
+                  {warning.code}
+                </span>
+                <span className="leading-relaxed text-amber-200/80">{warning.message}</span>
               </li>
             ))}
           </ul>
         </Card>
       )}
 
-      <div className="mt-8 flex flex-col items-start gap-6">
-        <Button onClick={() => document.getElementById('experiments')?.scrollIntoView({ behavior: 'smooth' })} className="px-8 py-3 text-lg">
-          Improve Reel
+      <div className="mt-10 flex flex-col items-center justify-center border-t border-ink-700 pt-10 pb-4">
+        <Button onClick={() => document.getElementById('experiments')?.scrollIntoView({ behavior: 'smooth' })} className="px-10 py-4 text-lg shadow-lg shadow-accent/20">
+          Run Counterfactual Experiments
         </Button>
+        <p className="mt-4 text-sm text-slate-500">Test what happens if you change the hook, tone, or audience.</p>
       </div>
-    </>
+    </div>
   );
 }
 
 function BottleneckRow({ bottleneck }: { bottleneck: Bottleneck }) {
   return (
-    <li className="border-l-2 border-signal-weak/40 pl-4">
-      <div className="mb-1 flex flex-wrap items-center gap-2">
+    <li className="relative rounded-lg border border-red-900/30 bg-red-950/10 p-5">
+      <div className="absolute left-0 top-0 h-full w-1 rounded-l-lg bg-red-500/50" />
+      <div className="mb-2 flex flex-wrap items-center gap-3">
         <Badge verdict="weak">{bottleneck.stage}</Badge>
-        <span className="text-xs text-slate-500">
-          severity {percent(bottleneck.severity)} · confidence {percent(bottleneck.confidence)}
+        <span className="text-xs font-medium text-red-400/80">
+          Severity: {percent(bottleneck.severity)}
         </span>
       </div>
-      <p className="text-sm text-slate-700">{bottleneck.description}</p>
-      <p className="mt-1.5 text-sm leading-relaxed text-slate-400">
-        <span className="text-slate-500">Likely cause: </span>
+      <p className="text-sm font-medium text-slate-200">{bottleneck.description}</p>
+      <div className="mt-3 rounded-md bg-ink-900/50 p-3 text-sm leading-relaxed text-slate-300">
+        <span className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">
+          AI Diagnosis
+        </span>
         {bottleneck.likelyCause}
-      </p>
+      </div>
     </li>
   );
 }
@@ -127,24 +146,23 @@ function SegmentList({
   empty: string;
 }) {
   if (segments.length === 0) {
-    return <p className="text-sm text-slate-500">{empty}</p>;
+    return <p className="text-sm italic text-slate-600">{empty}</p>;
   }
 
   return (
-    <ul className="space-y-4">
+    <ul className="space-y-6">
       {segments.map((segment) => (
-        <li key={segment.segmentId}>
-          <div className="mb-1.5 flex items-center justify-between gap-3">
-            <span className="text-sm text-slate-700">{segment.segmentName}</span>
+        <li key={segment.segmentId} className="group">
+          <div className="mb-2 flex items-center justify-between gap-3">
+            <span className="text-sm font-semibold text-slate-200 group-hover:text-white transition-colors">{segment.segmentName}</span>
             <Badge verdict={segment.verdict}>{score(segment.score)}</Badge>
           </div>
           <ScoreBar value={segment.score} verdict={segment.verdict} />
-          <div className="mt-1.5 flex flex-wrap gap-x-4 text-xs text-slate-500">
-            <span>watch {percent(segment.averageWatchProbability)}</span>
-            <span>complete {percent(segment.averageCompletionProbability)}</span>
-            <span>share {percent(segment.shareRate)}</span>
-            <span>save {percent(segment.saveRate)}</span>
-            <span>{segment.personaCount} personas</span>
+          <div className="mt-2.5 flex flex-wrap gap-x-5 gap-y-2 text-xs text-slate-500">
+            <span className="flex items-center gap-1.5"><div className="h-1.5 w-1.5 rounded-full bg-slate-600" /> Watch: <span className="text-slate-300">{percent(segment.averageWatchProbability)}</span></span>
+            <span className="flex items-center gap-1.5"><div className="h-1.5 w-1.5 rounded-full bg-slate-600" /> Complete: <span className="text-slate-300">{percent(segment.averageCompletionProbability)}</span></span>
+            <span className="flex items-center gap-1.5"><div className="h-1.5 w-1.5 rounded-full bg-slate-600" /> Share: <span className="text-slate-300">{percent(segment.shareRate)}</span></span>
+            <span className="flex items-center gap-1.5"><div className="h-1.5 w-1.5 rounded-full bg-slate-600" /> Save: <span className="text-slate-300">{percent(segment.saveRate)}</span></span>
           </div>
         </li>
       ))}

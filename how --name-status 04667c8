@@ -1,0 +1,53 @@
+[33mcommit 04667c83171fccb0465d7f91d91710dfb31d4b3d[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m
+Merge: d6e62e0 73692ed
+Author: Heman <hemangit22feb@gmail.com>
+Date:   Fri Aug 21 23:42:42 2026 +0530
+
+    Merge feature/video-analysis into main
+    
+    Integrates the AI Video Analysis module (preprocessing, transcription,
+    multimodal analysis) with the existing Frontend, AI Audience Simulation,
+    and Backend on main.
+    
+    Conflict resolved in ai/llm.py:
+    - Kept main's provider-agnostic architecture with retry/backoff logic.
+    - Added HuggingFaceProvider class to the PROVIDERS registry (consistent
+      with AnthropicProvider, OpenAIProvider, GeminiProvider pattern) to
+      preserve the HuggingFace Inference API support from feature/video-analysis.
+    - Updated LLMClient.provider() to use settings.hf_token for huggingface.
+    
+    New files brought in from feature/video-analysis:
+      - ai/video_analysis/preprocessing/preprocessing.py (implemented)
+      - ai/video_analysis/transcription/transcription.py (implemented)
+      - ai/video_analysis/multimodal/analyzer.py (implemented)
+      - ai/config.py (hf_token, hf_model settings, huggingface mock mode)
+      - ai/errors.py (updated)
+      - ai/counterfactual/generation/variants.py (hardened)
+      - ai/requirements.txt (new dependencies)
+      - ai/tests/test_analyzer.py, test_integration.py, test_llm.py,
+        test_member2_pipeline.py, test_preprocessing.py, test_sprint2.py,
+        test_transcription.py, test_variants.py (new test suites)
+    
+    Preserved from main (not overwritten):
+      - ai/tests/conftest.py
+      - ai/tests/test_dev1_simulation.py
+      - backend/tests/reelModel.test.ts
+      - All Frontend and AI Audience Simulation code
+
+ ai/config.py                                     |   6 [32m+[m
+ ai/counterfactual/generation/variants.py         |  47 [32m++[m[31m--[m
+ ai/errors.py                                     |   7 [32m+[m
+ ai/llm.py                                        |  82 [32m+++++++[m
+ ai/requirements.txt                              |   4 [32m+[m[31m-[m
+ ai/tests/test_analyzer.py                        | 106 [32m++++++++[m
+ ai/tests/test_integration.py                     |  96 [32m++++++++[m
+ ai/tests/test_llm.py                             | 121 [32m++++++++++[m
+ ai/tests/test_member2_pipeline.py                | 292 [32m+++++++++++++++++++++++[m
+ ai/tests/test_preprocessing.py                   |  71 [32m++++++[m
+ ai/tests/test_sprint2.py                         | 176 [32m++++++++++++++[m
+ ai/tests/test_transcription.py                   | 102 [32m++++++++[m
+ ai/tests/test_variants.py                        | 124 [32m++++++++++[m
+ ai/video_analysis/multimodal/analyzer.py         | 104 [32m+++++[m[31m---[m
+ ai/video_analysis/preprocessing/preprocessing.py | 182 [32m++++++++++++[m[31m--[m
+ ai/video_analysis/transcription/transcription.py |  70 [32m++++[m[31m--[m
+ 16 files changed, 1498 insertions(+), 92 deletions(-)

@@ -29,14 +29,13 @@ describe('mock-first API surface', () => {
     expect(response.body.data.segments[0]).toHaveProperty('relevanceScore');
   });
 
-  it('rejects an incomplete audience request with the missing field names', async () => {
+  it('accepts an incomplete audience request and provides smart defaults', async () => {
     const response = await request(app)
       .post('/api/v1/audience/discover')
       .send({ niche: 'fitness' })
-      .expect(422);
+      .expect(201);
 
-    expect(response.body.error.code).toBe('VALIDATION_FAILED');
-    expect(response.body.error.details.missing).toContain('targetAudience');
+    expect(response.body.data.request.targetAudience).toBe('General audience');
   });
 
   it('analyzes a reel into Content DNA', async () => {

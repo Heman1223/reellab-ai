@@ -21,6 +21,7 @@ import type {
  * the obvious thing to change once the backend stores projects.
  */
 export interface LabState {
+  audienceDescription: string | null;
   request: AudienceRequest | null;
   graph: AudienceGraph | null;
   reel: Reel | null;
@@ -30,6 +31,7 @@ export interface LabState {
 }
 
 interface LabContextValue extends LabState {
+  setAudienceDescription: (value: string | null) => void;
   setRequest: (value: AudienceRequest | null) => void;
   setGraph: (value: AudienceGraph | null) => void;
   setReel: (value: Reel | null) => void;
@@ -40,6 +42,7 @@ interface LabContextValue extends LabState {
 }
 
 const EMPTY: LabState = {
+  audienceDescription: null,
   request: null,
   graph: null,
   reel: null,
@@ -56,6 +59,7 @@ export function LabProvider({ children }: { children: ReactNode }) {
   const value = useMemo<LabContextValue>(
     () => ({
       ...state,
+      setAudienceDescription: (audienceDescription) => setState((prev) => ({ ...prev, audienceDescription })),
       setRequest: (request) => setState((prev) => ({ ...prev, request })),
       setGraph: (graph) => setState((prev) => ({ ...prev, graph })),
       setReel: (reel) => setState((prev) => ({ ...prev, reel })),

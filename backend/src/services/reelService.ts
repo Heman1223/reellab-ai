@@ -1,4 +1,5 @@
 import fs from 'node:fs';
+import path from 'node:path';
 import { randomUUID } from 'node:crypto';
 
 import type { ContentDNA, Reel } from '@shared/schemas/content';
@@ -51,7 +52,9 @@ export async function analyzeReel(
 
   if (input.reelId) {
     reel = getReel(input.reelId);
-    videoPath = reel.storagePath;
+    videoPath = path.resolve(reel.storagePath);
+  } else if (videoPath) {
+    videoPath = path.resolve(videoPath);
   }
 
   if (!videoPath) {
