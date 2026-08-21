@@ -104,8 +104,8 @@ async def _analyze_with_model(video_path: str, video_id: str) -> ContentDNA:
             dna = ContentDNA.model_validate(result.data)
             
             for scene in dna.scenes:
-                scene.end_seconds = min(scene.end_seconds, media.duration_seconds)
-                scene.start_seconds = min(scene.start_seconds, media.duration_seconds)
+                scene.end_seconds = max(0.0, min(scene.end_seconds, media.duration_seconds))
+                scene.start_seconds = max(0.0, min(scene.start_seconds, media.duration_seconds))
                 
             dna.scenes = sorted(dna.scenes, key=lambda s: s.start_seconds)
             

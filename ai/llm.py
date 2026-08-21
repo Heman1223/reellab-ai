@@ -119,8 +119,7 @@ class LLMClient:
                 "type": "object",
                 "properties": {
                     "response": {
-                        "type": "object",
-                        "description": "The generic JSON payload."
+                        "description": "The generic JSON payload (object or array)."
                     }
                 },
                 "required": ["response"]
@@ -148,8 +147,8 @@ class LLMClient:
         if data is None:
             raise MalformedModelOutputError("Model returned tool call without 'response' field.")
             
-        if not isinstance(data, dict):
-            raise MalformedModelOutputError("Model returned non-dictionary response.")
+        if not isinstance(data, (dict, list)):
+            raise MalformedModelOutputError("Model returned non-dictionary/non-list response.")
 
         metadata = self.metadata_for(
             model=model,

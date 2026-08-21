@@ -134,7 +134,10 @@ async def generate_variants(
     count: int = 2,
     instruction: str | None = None,
 ) -> tuple[list[Variant], bool]:
-    """Generate counterfactual variants. Returns `(variants, mock)`."""
+    \"\"\"Generate counterfactual variants. Returns `(variants, mock)`.\"\"\"
+    if count <= 0:
+        return [], False
+
     variants, mock = await with_fixture_fallback(
         "counterfactual.generate",
         lambda: _generate_with_model(content, simulation, modification_type, count, instruction),
