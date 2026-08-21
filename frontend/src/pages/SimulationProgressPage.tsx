@@ -103,7 +103,7 @@ export default function SimulationProgressPage() {
                       done ? 'bg-signal-strong' : active ? 'animate-pulse bg-accent' : 'bg-ink-500',
                     )}
                   />
-                  <span className={cn(done || active ? 'text-slate-300' : 'text-slate-600')}>
+                  <span className={cn(done || active ? 'text-slate-900 font-medium' : 'text-slate-400')}>
                     {item.label}
                   </span>
                 </li>

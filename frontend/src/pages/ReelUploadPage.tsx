@@ -64,7 +64,7 @@ export default function ReelUploadPage() {
           value={audienceDescription ?? ''}
           onChange={(e) => setAudienceDescription(e.target.value)}
           placeholder="e.g. College students interested in fitness"
-          className="w-full rounded-md border border-ink-600 bg-ink-800 px-4 py-2 text-sm text-slate-200 placeholder:text-slate-600 focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent"
+          className="w-full rounded-md border border-ink-600 bg-white px-4 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent"
           disabled={busy}
         />
       </Card>
@@ -79,7 +79,7 @@ export default function ReelUploadPage() {
           onClick={() => fileInputRef.current?.click()}
           className={cn(
             "relative flex cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed p-10 transition-colors",
-            isDragging ? "border-accent bg-accent/10" : "border-ink-600 hover:border-ink-500 hover:bg-ink-700/50",
+            isDragging ? "border-accent bg-accent/10" : "border-ink-600 hover:border-ink-700 hover:bg-ink-700/20",
             busy && "pointer-events-none opacity-50"
           )}
         >
@@ -92,12 +92,12 @@ export default function ReelUploadPage() {
           />
           {file ? (
             <div className="text-center">
-              <p className="text-sm font-medium text-slate-200">{file.name}</p>
+              <p className="text-sm font-medium text-slate-900">{file.name}</p>
               <p className="mt-1 text-xs text-slate-500">{fileSize(file.size)}</p>
             </div>
           ) : (
             <div className="text-center">
-              <p className="text-sm font-medium text-slate-200">Click to upload or drag and drop</p>
+              <p className="text-sm font-medium text-slate-900">Click to upload or drag and drop</p>
               <p className="mt-1 text-xs text-slate-500">MP4, MOV, WEBM up to 100MB</p>
             </div>
           )}
@@ -143,7 +143,7 @@ export default function ReelUploadPage() {
               />
             </div>
 
-            <blockquote className="mt-4 border-l-2 border-accent/50 pl-4 text-sm italic text-slate-300">
+            <blockquote className="mt-4 border-l-2 border-accent/50 pl-4 text-sm italic text-slate-700 font-serif">
               “{contentDna.hook.text}”
             </blockquote>
 
@@ -155,7 +155,7 @@ export default function ReelUploadPage() {
                     <span className="w-24 shrink-0 font-mono text-xs text-slate-500">
                       {scene.startSeconds.toFixed(1)}–{scene.endSeconds.toFixed(1)}s
                     </span>
-                    <span className="text-slate-400">{scene.description}</span>
+                    <span className="text-slate-700">{scene.description}</span>
                   </li>
                 ))}
               </ol>
@@ -181,7 +181,7 @@ function Detail({ label, value }: { label: string; value: string }) {
   return (
     <div>
       <div className="label text-slate-500">{label}</div>
-      <div className="text-sm text-slate-300">{value}</div>
+      <div className="text-sm text-slate-700">{value}</div>
     </div>
   );
 }

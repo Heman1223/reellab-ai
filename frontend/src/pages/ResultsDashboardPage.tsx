@@ -93,14 +93,14 @@ export default function ResultsDashboardPage() {
       </Card>
 
       {result.warnings.length > 0 && (
-        <Card className="mt-6 border-amber-900/50 bg-amber-950/10" title="Hidden Opportunities & Warnings">
+        <Card className="mt-6 border-amber-200 bg-amber-50" title="Hidden Opportunities & Warnings">
           <ul className="space-y-2 text-sm">
             {result.warnings.map((warning) => (
               <li key={warning.code} className="flex items-start gap-3">
-                <span className="mt-0.5 shrink-0 rounded bg-amber-500/20 px-1.5 py-0.5 font-mono text-xs text-amber-500">
+                <span className="mt-0.5 shrink-0 rounded bg-amber-100 px-1.5 py-0.5 font-mono text-xs text-amber-800 border border-amber-200">
                   {warning.code}
                 </span>
-                <span className="leading-relaxed text-amber-200/80">{warning.message}</span>
+                <span className="leading-relaxed text-amber-900">{warning.message}</span>
               </li>
             ))}
           </ul>
@@ -119,16 +119,16 @@ export default function ResultsDashboardPage() {
 
 function BottleneckRow({ bottleneck }: { bottleneck: Bottleneck }) {
   return (
-    <li className="relative rounded-lg border border-red-900/30 bg-red-950/10 p-5">
-      <div className="absolute left-0 top-0 h-full w-1 rounded-l-lg bg-red-500/50" />
+    <li className="relative rounded-lg border border-red-200 bg-red-50 p-5">
+      <div className="absolute left-0 top-0 h-full w-1 rounded-l-lg bg-red-500" />
       <div className="mb-2 flex flex-wrap items-center gap-3">
         <Badge verdict="weak">{bottleneck.stage}</Badge>
-        <span className="text-xs font-medium text-red-400/80">
+        <span className="text-xs font-medium text-red-700">
           Severity: {percent(bottleneck.severity)}
         </span>
       </div>
-      <p className="text-sm font-medium text-slate-200">{bottleneck.description}</p>
-      <div className="mt-3 rounded-md bg-ink-900/50 p-3 text-sm leading-relaxed text-slate-300">
+      <p className="text-sm font-medium text-slate-900">{bottleneck.description}</p>
+      <div className="mt-3 rounded-md bg-white border border-ink-600 p-3 text-sm leading-relaxed text-slate-700">
         <span className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">
           AI Diagnosis
         </span>
@@ -146,7 +146,7 @@ function SegmentList({
   empty: string;
 }) {
   if (segments.length === 0) {
-    return <p className="text-sm italic text-slate-600">{empty}</p>;
+    return <p className="text-sm italic text-slate-500">{empty}</p>;
   }
 
   return (
@@ -154,15 +154,15 @@ function SegmentList({
       {segments.map((segment) => (
         <li key={segment.segmentId} className="group">
           <div className="mb-2 flex items-center justify-between gap-3">
-            <span className="text-sm font-semibold text-slate-200 group-hover:text-white transition-colors">{segment.segmentName}</span>
+            <span className="text-sm font-semibold text-slate-900 transition-colors">{segment.segmentName}</span>
             <Badge verdict={segment.verdict}>{score(segment.score)}</Badge>
           </div>
           <ScoreBar value={segment.score} verdict={segment.verdict} />
           <div className="mt-2.5 flex flex-wrap gap-x-5 gap-y-2 text-xs text-slate-500">
-            <span className="flex items-center gap-1.5"><div className="h-1.5 w-1.5 rounded-full bg-slate-600" /> Watch: <span className="text-slate-300">{percent(segment.averageWatchProbability)}</span></span>
-            <span className="flex items-center gap-1.5"><div className="h-1.5 w-1.5 rounded-full bg-slate-600" /> Complete: <span className="text-slate-300">{percent(segment.averageCompletionProbability)}</span></span>
-            <span className="flex items-center gap-1.5"><div className="h-1.5 w-1.5 rounded-full bg-slate-600" /> Share: <span className="text-slate-300">{percent(segment.shareRate)}</span></span>
-            <span className="flex items-center gap-1.5"><div className="h-1.5 w-1.5 rounded-full bg-slate-600" /> Save: <span className="text-slate-300">{percent(segment.saveRate)}</span></span>
+            <span className="flex items-center gap-1.5"><div className="h-1.5 w-1.5 rounded-full bg-slate-300" /> Watch: <span className="text-slate-700 font-medium">{percent(segment.averageWatchProbability)}</span></span>
+            <span className="flex items-center gap-1.5"><div className="h-1.5 w-1.5 rounded-full bg-slate-300" /> Complete: <span className="text-slate-700 font-medium">{percent(segment.averageCompletionProbability)}</span></span>
+            <span className="flex items-center gap-1.5"><div className="h-1.5 w-1.5 rounded-full bg-slate-300" /> Share: <span className="text-slate-700 font-medium">{percent(segment.shareRate)}</span></span>
+            <span className="flex items-center gap-1.5"><div className="h-1.5 w-1.5 rounded-full bg-slate-300" /> Save: <span className="text-slate-700 font-medium">{percent(segment.saveRate)}</span></span>
           </div>
         </li>
       ))}

@@ -4,7 +4,7 @@
 
 @layer base {
   :root {
-    color-scheme: dark;
+    color-scheme: light;
   }
 
   html,
@@ -15,9 +15,7 @@
   }
 
   body {
-    @apply bg-slate-900 text-slate-200 antialiased;
-    background: radial-gradient(circle at 50% -20%, #2e1065 0%, #0f172a 100%);
-    background-attachment: fixed;
+    @apply bg-ink-900 text-slate-900 antialiased;
   }
 
   /* Keyboard focus stays visible everywhere. */
@@ -30,17 +28,17 @@
   /* Three primitives used across every page. Anything more specific belongs in
      a component, not here. */
   .card {
-    @apply rounded-2xl border border-white/10 bg-black/40 p-6 backdrop-blur-md shadow-2xl transition-all duration-300;
+    @apply rounded-2xl border border-ink-600 bg-white p-6 shadow-sm transition-all duration-300;
   }
 
   .label {
-    @apply mb-1.5 block text-xs font-bold uppercase tracking-widest text-slate-400;
+    @apply mb-1.5 block text-xs font-bold uppercase tracking-widest text-slate-500;
   }
 
   .input {
-    @apply w-full rounded-xl border border-white/10 bg-black/30 px-4 py-3 text-sm
-           text-slate-200 placeholder:text-slate-500 backdrop-blur-sm
-           focus:border-accent focus:bg-black/50 focus:outline-none focus:ring-1 focus:ring-accent transition-all duration-300;
+    @apply w-full rounded-xl border border-ink-600 bg-white px-4 py-3 text-sm
+           text-slate-900 placeholder:text-slate-400
+           focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent transition-all duration-300;
   }
 }
 

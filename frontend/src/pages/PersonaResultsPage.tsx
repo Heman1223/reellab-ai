@@ -67,17 +67,17 @@ function PersonaCard({ reaction }: { reaction: PersonaSimulationResult }) {
   const demographic = mockPersona?.demographicSummary ?? `Synthetic Viewer (${reaction.personaId.split('__')[0]})`;
 
   return (
-    <Card className={failed ? 'opacity-60 border-red-900/50' : 'border-ink-700 bg-ink-800/80'}>
-      <header className="mb-4 flex flex-wrap items-start justify-between gap-3 border-b border-ink-700/50 pb-4">
+    <Card className={failed ? 'opacity-60 border-red-300 bg-red-50' : 'border-ink-600 bg-white'}>
+      <header className="mb-4 flex flex-wrap items-start justify-between gap-3 border-b border-ink-600 pb-4">
         <div>
-          <h3 className="text-base font-bold text-slate-200">
+          <h3 className="text-base font-bold text-slate-900">
             {displayName}
           </h3>
           <p className="mt-1 text-xs text-slate-500">{demographic}</p>
         </div>
         <div className="flex items-center gap-3">
           {reaction.swipeTime !== null && (
-            <span className="rounded-md bg-ink-900 px-2 py-1 font-mono text-xs text-slate-400">
+            <span className="rounded-md bg-ink-900 px-2 py-1 font-mono text-xs text-slate-600 border border-ink-700">
               Left at {seconds(reaction.swipeTime)}
             </span>
           )}
@@ -91,7 +91,7 @@ function PersonaCard({ reaction }: { reaction: PersonaSimulationResult }) {
         </p>
       ) : (
         <>
-          <blockquote className="mb-6 rounded-r-lg border-l-4 border-accent/70 bg-accent/5 p-4 text-sm italic leading-relaxed text-slate-300">
+          <blockquote className="mb-6 rounded-r-lg border-l-4 border-accent bg-accent/5 p-4 text-sm italic leading-relaxed text-slate-700 font-serif">
             “{reaction.reason}”
           </blockquote>
 
