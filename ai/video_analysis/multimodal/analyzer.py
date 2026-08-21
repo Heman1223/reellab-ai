@@ -80,7 +80,27 @@ async def _analyze_with_model(video_path: str, video_id: str) -> ContentDNA:
         )
         
         try:
+            if isinstance(result.data, dict):
+                result.data["duration_seconds"] = media.duration_seconds
+                result.data["transcript"] = transcript.text
+                
+                audio = result.data.get("audio_features")
+                if not isinstance(audio, dict):
+                    audio = {}
+                audio["has_speech"] = not transcript.is_empty
+                audio["words_per_minute"] = transcript.words_per_minute
+                if transcript.language:
+                    audio["language"] = transcript.language
+                result.data["audio_features"] = audio
+                
             dna = ContentDNA.model_validate(result.data)
+            
+            for scene in dna.scenes:
+                scene.end_seconds = min(scene.end_seconds, media.duration_seconds)
+                scene.start_seconds = min(scene.start_seconds, media.duration_seconds)
+                
+            dna.scenes = sorted(dna.scenes, key=lambda s: s.start_seconds)
+            
         except Exception as e:
             raise MalformedModelOutputError(f"Validation failed for ContentDNA: {str(e)}") from e
             

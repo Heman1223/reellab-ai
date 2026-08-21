@@ -106,13 +106,26 @@ async def _generate_with_model(
         prompt_version=PROMPT_VERSION,
         tier="reasoning",
     )
-    raw = result.data if isinstance(result.data, list) else []
-    return [
-        Variant.model_validate(item).model_copy(
-            update={"id": item.get("id") or f"var_{uuid.uuid4().hex[:6]}"}
-        )
-        for item in raw
-    ]
+    raw = result.data if isinstance(result.data, list) else [result.data]
+    
+    try:
+        variants = []
+        for item in raw:
+            # Handle case where LLM returns {"variants": [...]} instead of [...]
+            if isinstance(item, dict) and "variants" in item and isinstance(item["variants"], list):
+                for subitem in item["variants"]:
+                    v = Variant.model_validate(subitem).model_copy(
+                        update={"id": subitem.get("id") or f"var_{uuid.uuid4().hex[:6]}"}
+                    )
+                    variants.append(v)
+            else:
+                v = Variant.model_validate(item).model_copy(
+                    update={"id": item.get("id") or f"var_{uuid.uuid4().hex[:6]}"}
+                )
+                variants.append(v)
+        return variants[:count]
+    except Exception as e:
+        raise MalformedModelOutputError(f"Validation failed for Variant: {str(e)}") from e
 
 
 def _fixture_variants(count: int) -> list[Variant]:

@@ -82,8 +82,10 @@ async def test_transcription_failure_continues(mock_pipeline, monkeypatch):
     
     dna, mock = await analyze_video("test.mp4", "vid1")
     assert mock is False
-    # Transcription failure should be caught, continuing with empty transcript
-    pass
+    # Verify deterministic fallback: duration should override model, has_speech should be False
+    assert dna.duration_seconds == 10.0
+    assert dna.audio_features.has_speech is False
+    assert dna.transcript == ""
 
 
 @pytest.mark.asyncio
