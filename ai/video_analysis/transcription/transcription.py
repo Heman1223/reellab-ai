@@ -44,18 +44,52 @@ class Transcript:
         return len(self.text.split()) / (duration / 60)
 
 
-def transcribe(audio_path: str | Path) -> Transcript:
-    """Transcribe an extracted audio track.
+try:
+    from faster_whisper import WhisperModel
+except ImportError:
+    WhisperModel = None
 
-    TODO(Developer 2):
-      - `faster-whisper` with the `base` or `small` model is the pragmatic
-        choice: it runs on CPU, handles Indian-accented English acceptably, and
-        needs no API budget. Uncomment it in requirements.txt.
-      - Keep per-segment timings. The hook analysis needs to know what was said
-        in the first three seconds specifically, not just overall.
-      - Return an empty `Transcript` for silence rather than raising.
-    """
-    raise NotImplementedError(
-        f"transcribe is not implemented yet (ai/video_analysis/transcription/). "
-        f"Would transcribe: {audio_path}"
-    )
+from errors import AINotConfiguredError, TranscriptionFailedError
+
+_model = None
+
+
+def _get_model() -> WhisperModel:
+    global _model
+    if _model is None:
+        if WhisperModel is None:
+            raise AINotConfiguredError("faster-whisper is not installed")
+        _model = WhisperModel("base", device="cpu", compute_type="int8")
+    return _model
+
+
+def transcribe(audio_path: str | Path | None) -> Transcript:
+    """Transcribe an extracted audio track using faster-whisper."""
+    if not audio_path:
+        return Transcript(text="")
+        
+    path = Path(audio_path)
+    if not path.exists() or not path.is_file():
+        return Transcript(text="")
+        
+    try:
+        model = _get_model()
+        segments_generator, info = model.transcribe(str(path), beam_size=5)
+        
+        segments = []
+        texts = []
+        for s in segments_generator:
+            text = s.text.strip()
+            if text:
+                segments.append(TranscriptSegment(start_seconds=s.start, end_seconds=s.end, text=text))
+                texts.append(text)
+                
+        if not segments:
+            return Transcript(text="")
+            
+        full_text = " ".join(texts)
+        return Transcript(text=full_text, language=info.language, segments=segments)
+    except AINotConfiguredError:
+        raise
+    except Exception as e:
+        raise TranscriptionFailedError(f"Whisper inference failed: {str(e)}") from e

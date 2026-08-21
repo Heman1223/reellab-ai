@@ -24,7 +24,7 @@ pytest>=8.3,<9.0
 #   and make sure `ffmpeg -version` works before uncommenting these.
 # opencv-python-headless>=4.10
 # numpy>=2.0
-# faster-whisper>=1.0
+faster-whisper>=1.0
 #
 # Evaluation metrics (Developer 1, when building ai/evaluation/metrics/):
 # scipy>=1.14

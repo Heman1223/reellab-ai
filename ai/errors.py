@@ -59,6 +59,13 @@ class EmptyTranscriptError(ReelLabAIError):
     http_status = 422
 
 
+class TranscriptionFailedError(ReelLabAIError):
+    """Whisper crashed or failed to transcribe the audio file."""
+    
+    code = "TRANSCRIPTION_FAILED"
+    http_status = 500
+
+
 class PersonaGenerationError(ReelLabAIError):
     code = "PERSONA_GENERATION_FAILED"
     http_status = 502
