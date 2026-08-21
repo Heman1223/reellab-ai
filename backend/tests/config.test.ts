@@ -17,8 +17,11 @@ describe('configuration', () => {
   });
 
   it('never logs Mongo credentials', () => {
-    expect(redactUri('mongodb://user:hunter2@cluster:27017/reellab')).toBe(
-      'mongodb://***@cluster:27017/reellab',
+    expect(redactUri('mongodb://test-user:test-password@localhost:27017/reellab-test')).toBe(
+      'mongodb://***@localhost:27017/reellab-test',
+    );
+    expect(redactUri('mongodb://localhost:27017/reellab')).toBe(
+      'mongodb://localhost:27017/reellab',
     );
   });
 
