@@ -53,6 +53,9 @@ class Settings:
     api_key: str = os.getenv("AI_API_KEY", "")
     multimodal_model: str = os.getenv("MULTIMODAL_MODEL", "claude-sonnet-5")
     reasoning_model: str = os.getenv("REASONING_MODEL", "claude-opus-5")
+    
+    hf_token: str = os.getenv("HF_TOKEN", "")
+    hf_model: str = os.getenv("HF_MODEL", "google/gemma-4-31B-it")
 
     # Cost guard rails. See docs/architecture.md#cost-aware-architecture.
     max_personas: int = _int("AI_MAX_PERSONAS", 25)
@@ -61,6 +64,9 @@ class Settings:
     @property
     def is_mock_mode(self) -> bool:
         """True when no model will be called and fixtures are served instead."""
+        # For Hugging Face, check if hf_token is available when provider is huggingface
+        if self.provider == "huggingface":
+            return self.hf_token.strip() == ""
         return self.provider == "mock" or self.api_key.strip() == ""
 
 

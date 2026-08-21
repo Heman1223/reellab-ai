@@ -611,10 +611,87 @@ def _raise_for_status(response: httpx.Response, provider: str) -> None:
     )
 
 
+class HuggingFaceProvider:
+    """HuggingFace Inference API via the Chat Completions endpoint.
+
+    Supports multimodal inputs (image frames) by base64-encoding JPEG files
+    from a directory path. The model is expected to return raw JSON.
+    """
+
+    name = "huggingface"
+
+    def __init__(self, api_key: str) -> None:
+        # api_key is the HF_TOKEN for HuggingFace
+        self._api_key = api_key
+
+    async def generate_structured(
+        self,
+        *,
+        prompt: str,
+        system: str,
+        schema: dict[str, Any],
+        model: str,
+        max_tokens: int,
+        timeout: float,
+        media: list[MediaAttachment],
+    ) -> ProviderResponse:
+        content: list[dict[str, Any]] = []
+        for item in media:
+            content.append(
+                {
+                    "type": "image_url",
+                    "image_url": {"url": f"data:{item.media_type};base64,{item.data_b64}"},
+                }
+            )
+        content.append(
+            {
+                "type": "text",
+                "text": prompt + "\n\nRespond ONLY with raw JSON containing the required output.",
+            }
+        )
+
+        payload = {
+            "model": model,
+            "messages": [{"role": "user", "content": content}],
+            "max_tokens": max_tokens,
+            "stream": False,
+        }
+
+        url = f"https://api-inference.huggingface.co/models/{model}/v1/chat/completions"
+
+        async with httpx.AsyncClient(timeout=timeout) as client:
+            response = await client.post(
+                url,
+                headers={
+                    "Authorization": f"Bearer {self._api_key}",
+                    "Content-Type": "application/json",
+                },
+                json=payload,
+            )
+
+        _raise_for_status(response, self.name)
+        body = response.json()
+
+        try:
+            raw_text = body["choices"][0]["message"]["content"]
+        except (KeyError, IndexError) as exc:
+            raise MalformedModelOutputError("HuggingFace returned no message content.") from exc
+
+        usage = body.get("usage", {})
+        return ProviderResponse(
+            data=_parse_json(raw_text),
+            model=model,
+            input_tokens=usage.get("prompt_tokens"),
+            output_tokens=usage.get("completion_tokens"),
+            raw_text=raw_text,
+        )
+
+
 PROVIDERS: dict[str, Callable[[str], ModelProvider]] = {
     "anthropic": AnthropicProvider,
     "openai": OpenAIProvider,
     "gemini": GeminiProvider,
+    "huggingface": HuggingFaceProvider,
 }
 
 
@@ -684,6 +761,11 @@ class LLMClient:
                 f"Unknown AI_PROVIDER '{settings.provider}'. "
                 f"Expected one of: {', '.join(sorted(PROVIDERS))}, or 'mock'.",
             )
+        if settings.provider == "huggingface":
+            token = settings.hf_token
+            if not token.strip():
+                raise AINotConfiguredError("HF_TOKEN is empty (required for huggingface provider).")
+            return factory(token)
         if not settings.api_key.strip():
             raise AINotConfiguredError("AI_API_KEY is empty.")
         return factory(settings.api_key)
