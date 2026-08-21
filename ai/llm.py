@@ -751,17 +751,20 @@ class LLMClient:
 
     # -- configuration ----------------------------------------------------
 
-    def is_configured(self) -> bool:
-        return not settings.is_mock_mode and settings.provider in PROVIDERS
+    def is_configured(self, tier: str = "reasoning") -> bool:
+        provider_name = settings.multimodal_provider if tier == "multimodal" else settings.provider
+        return settings.is_configured_for(tier) and provider_name in PROVIDERS
 
-    def provider(self) -> ModelProvider:
-        factory = PROVIDERS.get(settings.provider)
+    def provider_for(self, tier: str) -> ModelProvider:
+        provider_name = settings.multimodal_provider if tier == "multimodal" else settings.provider
+        factory = PROVIDERS.get(provider_name)
         if factory is None:
+            config_key = "MULTIMODAL_PROVIDER" if tier == "multimodal" else "AI_PROVIDER"
             raise AINotConfiguredError(
-                f"Unknown AI_PROVIDER '{settings.provider}'. "
+                f"Unknown {config_key} '{provider_name}'. "
                 f"Expected one of: {', '.join(sorted(PROVIDERS))}, or 'mock'.",
             )
-        if settings.provider == "huggingface":
+        if provider_name == "huggingface":
             token = settings.hf_token
             if not token.strip():
                 raise AINotConfiguredError("HF_TOKEN is empty (required for huggingface provider).")
@@ -894,13 +897,15 @@ class LLMClient:
         max_tokens: int,
         media: list[MediaAttachment],
     ) -> ProviderResponse:
-        if not self.is_configured():
+        if not self.is_configured(tier):
+            config_key = "MULTIMODAL_PROVIDER" if tier == "multimodal" else "AI_PROVIDER"
+            provider_name = settings.multimodal_provider if tier == "multimodal" else settings.provider
             raise AINotConfiguredError(
-                "No AI provider configured. Set AI_PROVIDER and AI_API_KEY in .env.",
-                details={"provider": settings.provider},
+                f"No AI provider configured for tier '{tier}'. Set {config_key} and corresponding API keys in .env.",
+                details={"provider": provider_name, "tier": tier},
             )
 
-        provider = self.provider()
+        provider = self.provider_for(tier)
         model = self.model_for(tier)
         last: Exception | None = None
 
