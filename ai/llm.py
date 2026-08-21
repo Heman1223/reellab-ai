@@ -76,7 +76,7 @@ class LLMClient:
             )
 
         try:
-            import anthropic
+            import anthropic  # type: ignore
         except ImportError:
             anthropic = None
 
@@ -86,7 +86,7 @@ class LLMClient:
         started = time.perf_counter()
         model = self.model_for(tier)
 
-        client = anthropic.AsyncAnthropic(api_key=settings.api_key)
+        client = anthropic.AsyncAnthropic(api_key=settings.api_key)  # type: ignore
         
         content = []
         if tier == "multimodal" and media_path:
@@ -134,7 +134,7 @@ class LLMClient:
                 tools=[generic_tool],
                 tool_choice={"type": "tool", "name": "return_json"},
             )
-        except anthropic.APITimeoutError as e:
+        except anthropic.APITimeoutError as e:  # type: ignore
             raise ModelTimeoutError(f"Anthropic API timed out: {str(e)}") from e
         except Exception as e:
             raise ReelLabAIError(f"Anthropic API call failed: {str(e)}") from e
