@@ -2,22 +2,29 @@
 
 The loop we are trying to close:
 
-    historical reel → our simulation → predicted ranking
-                                            ↕ compare
-                              actual performance (data/evaluation/)
+    historical reel -> our simulation -> predicted ranking
+                                              |  compare
+                                actual performance (data/evaluation/)
 
-Right now the harness only scores predictions someone hands it. Running the full
-simulation over a dataset is the next step and needs the Content DNA for each
-historical reel to exist first — `content_dna_ref` in the dataset is where that
-goes.
+`run_evaluation` scores predictions someone hands it. `simulate_dataset` closes
+the loop end to end, but needs Content DNA per historical reel — the
+`contentDnaRef` field in the dataset — which is Developer 2's pipeline. Until
+that exists it raises rather than pretending.
 
 OWNER: Developer 1.
 """
 
 from __future__ import annotations
 
+from schemas import (
+    ContentDNA,
+    EvaluationDataset,
+    EvaluationItem,
+    EvaluationMetrics,
+    Persona,
+    Prediction,
+)
 from logging_utils import get_logger, log_event
-from schemas import EvaluationDataset, EvaluationMetrics, Prediction
 
 from ..datasets.loader import load_dataset
 from ..metrics.metrics import evaluate_predictions
@@ -28,50 +35,83 @@ logger = get_logger("evaluation.harness")
 def run_evaluation(
     predictions: list[Prediction],
     dataset_id: str | None = None,
+    actuals: EvaluationDataset | list[EvaluationItem] | None = None,
 ) -> EvaluationMetrics:
-    """Score a set of predictions against a dataset."""
-    dataset = load_dataset(dataset_id)
+    """Score a set of predictions against ground truth."""
+    dataset = actuals if actuals is not None else load_dataset(dataset_id)
     metrics = evaluate_predictions(predictions, dataset)
 
     log_event(
         logger,
         "evaluation_completed",
-        dataset_id=dataset.dataset_id,
+        dataset_id=dataset_id,
         item_count=metrics.item_count,
         rank_correlation=metrics.rank_correlation,
         pairwise_ranking_accuracy=metrics.pairwise_ranking_accuracy,
+        mean_absolute_error=metrics.mean_absolute_error,
+        confidence_calibration=metrics.confidence_calibration,
     )
     return metrics
 
 
-def rank_from_scores(scores: dict[str, float]) -> list[Prediction]:
-    """Turn `{reel_id: score}` into ranked predictions, best first."""
+def rank_from_scores(
+    scores: dict[str, float], confidences: dict[str, float] | None = None
+) -> list[Prediction]:
+    """Turn `{reel_id: score}` into ranked predictions, best first.
+
+    Pass `confidences` from the simulations themselves. Without it every
+    prediction reports 0.5, and confidence calibration becomes unmeasurable —
+    which is exactly the metric we most want.
+    """
     ordered = sorted(scores.items(), key=lambda item: item[1], reverse=True)
     return [
         Prediction(
             reel_id=reel_id,
             predicted_score=score,
             predicted_rank=index + 1,
-            # Placeholder: the caller should pass the simulation's own confidence.
-            confidence=0.5,
+            confidence=(confidences or {}).get(reel_id, 0.5),
         )
         for index, (reel_id, score) in enumerate(ordered)
     ]
 
 
-async def simulate_dataset(dataset: EvaluationDataset) -> list[Prediction]:
+async def simulate_dataset(
+    dataset: EvaluationDataset,
+    personas: list[Persona],
+    content_by_reel: dict[str, ContentDNA],
+) -> list[Prediction]:
     """Run the full simulation over every reel in a dataset.
 
-    TODO(Developer 1):
-      1. For each item, load or produce its Content DNA (`content_dna_ref`).
-      2. Run the simulation against a fixed audience graph — the same graph for
-         every reel, or the comparison measures the graph rather than the reels.
-      3. Rank by `overall_score` and hand the result to `run_evaluation`.
-
-    Pin the audience graph and the prompt versions across the whole sweep.
-    Without that, a re-run measures prompt drift instead of reel quality.
+    Deliberately takes the persona set and the Content DNA as arguments rather
+    than resolving them: every reel in a sweep must be simulated against the
+    **same** personas, or the comparison measures the personas instead of the
+    reels.
     """
-    raise NotImplementedError(
-        f"simulate_dataset is not implemented yet (ai/evaluation/harness/). "
-        f"Dataset '{dataset.dataset_id}' has {len(dataset.items)} items."
-    )
+    from simulation.engine.engine import SimulationOptions, run_simulation_for_personas
+
+    scores: dict[str, float] = {}
+    confidences: dict[str, float] = {}
+    # Bottleneck explanation costs a model call per reel and is not used by any
+    # ranking metric, so a sweep skips it.
+    options = SimulationOptions(explain_bottlenecks=False)
+
+    for item in dataset.items:
+        content = content_by_reel.get(item.reel_id)
+        if content is None:
+            log_event(logger, "evaluation_item_skipped", reel_id=item.reel_id, reason="no_content_dna")
+            continue
+
+        result, _ = await run_simulation_for_personas(
+            personas, content, options=options, reel_id=item.reel_id
+        )
+        scores[item.reel_id] = result.overall_score
+        confidences[item.reel_id] = result.confidence
+
+    if not scores:
+        raise ValueError(
+            "No reel in the dataset had Content DNA. Populate `contentDnaRef` "
+            "(Developer 2's pipeline) before running a sweep."
+        )
+
+    log_event(logger, "dataset_simulated", dataset_id=dataset.dataset_id, reels=len(scores))
+    return rank_from_scores(scores, confidences)

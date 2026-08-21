@@ -55,9 +55,16 @@ class EvaluationMetrics(ReelLabModel):
     item_count: int = Field(ge=0)
     rank_correlation: float | None = None
     pairwise_ranking_accuracy: float | None = None
+    #: Mean absolute error between predicted score and normalised actual
+    #: performance, both on 0-1. Lower is better.
+    mean_absolute_error: float | None = None
     false_positives: int | None = None
     false_negatives: int | None = None
     mean_confidence: float | None = None
+    #: Do we know when we are wrong? Correlation between stated confidence and
+    #: actual accuracy, -1..1. Near zero means confidence carries no signal,
+    #: which matters more than the raw accuracy number.
+    confidence_calibration: float | None = None
     notes: list[str] = Field(default_factory=list)
 
 

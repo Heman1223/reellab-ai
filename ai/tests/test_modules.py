@@ -143,9 +143,10 @@ def test_overall_score_weights_by_persona_count():
 def test_propagation_produces_waves_and_terminates():
     simulation = fixtures.simulation_result()
     waves = simulate_propagation(
-        fixtures.audience_graph(),
-        simulation.audience_segment_results,
         simulation.audience_results,
+        graph=fixtures.audience_graph(),
+        segment_results=simulation.audience_segment_results,
+        seed=42,
     )
 
     assert waves
@@ -155,8 +156,8 @@ def test_propagation_produces_waves_and_terminates():
     assert waves[-1].terminated or len(waves) <= 5
 
 
-def test_propagation_with_no_segments_returns_nothing():
-    assert simulate_propagation(fixtures.audience_graph(), []) == []
+def test_propagation_with_no_persona_results_returns_nothing():
+    assert simulate_propagation([], graph=fixtures.audience_graph()) == []
 
 
 # --- simulation engine ------------------------------------------------------
@@ -249,8 +250,11 @@ def test_evaluation_scores_a_perfect_ranking():
     assert metrics.item_count == len(dataset.items)
     assert metrics.pairwise_ranking_accuracy == 1.0
     assert metrics.rank_correlation == 1.0
-    # Unimplemented metrics stay null rather than reporting a fake zero.
-    assert metrics.false_positives is None
+    # False positives/negatives are counted against HIT_THRESHOLD now, so they
+    # are real integers rather than the `None` the placeholder used to return.
+    assert isinstance(metrics.false_positives, int)
+    assert isinstance(metrics.false_negatives, int)
+    assert metrics.mean_absolute_error is not None
 
 
 def test_evaluation_scores_a_reversed_ranking():

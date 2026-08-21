@@ -1,3 +1,19 @@
-from .profiles import brief_for, cache_key, select_within_budget
+from .profiles import (
+    PersonaCache,
+    behavioural_spread,
+    brief_for,
+    cache_key,
+    persona_cache,
+    select_within_budget,
+    slug_id,
+)
 
-__all__ = ["brief_for", "cache_key", "select_within_budget"]
+__all__ = [
+    "PersonaCache",
+    "behavioural_spread",
+    "brief_for",
+    "cache_key",
+    "persona_cache",
+    "select_within_budget",
+    "slug_id",
+]
