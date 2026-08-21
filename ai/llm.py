@@ -75,6 +75,130 @@ class LLMClient:
                 details={"provider": settings.provider},
             )
 
+        started = time.perf_counter()
+        model = self.model_for(tier)
+
+        if settings.provider == "huggingface":
+            return await self._complete_huggingface(
+                model=model,
+                prompt=prompt,
+                prompt_version=prompt_version,
+                tier=tier,
+                max_tokens=max_tokens,
+                media_path=media_path,
+                started=started,
+            )
+        else:
+            return await self._complete_anthropic(
+                model=model,
+                prompt=prompt,
+                prompt_version=prompt_version,
+                tier=tier,
+                max_tokens=max_tokens,
+                media_path=media_path,
+                started=started,
+            )
+
+    async def _complete_huggingface(
+        self,
+        *,
+        model: str,
+        prompt: str,
+        prompt_version: str,
+        tier: str,
+        max_tokens: int,
+        media_path: str | None,
+        started: float,
+    ) -> LLMResult:
+        import httpx
+        import json
+        import base64
+        from pathlib import Path
+
+        headers = {
+            "Authorization": f"Bearer {settings.hf_token}",
+            "Content-Type": "application/json",
+        }
+
+        # Format messages for standard Chat Completions
+        content = []
+        if tier == "multimodal" and media_path:
+            m_path = Path(media_path)
+            if m_path.is_dir():
+                frames = sorted(list(m_path.glob("*.jpg")) + list(m_path.glob("*.jpeg")))
+                for f in frames:
+                    with open(f, "rb") as fp:
+                        encoded = base64.b64encode(fp.read()).decode("utf-8")
+                    content.append({
+                        "type": "image_url",
+                        "image_url": {"url": f"data:image/jpeg;base64,{encoded}"},
+                    })
+        
+        content.append({
+            "type": "text",
+            "text": prompt + "\n\nRespond ONLY with raw JSON containing the required output.",
+        })
+
+        payload = {
+            "model": model,
+            "messages": [{"role": "user", "content": content}],
+            "max_tokens": max_tokens,
+            "stream": False,
+        }
+
+        url = f"https://api-inference.huggingface.co/models/{model}/v1/chat/completions"
+
+        async with httpx.AsyncClient(timeout=settings.request_timeout_seconds) as client:
+            try:
+                response = await client.post(url, headers=headers, json=payload)
+                response.raise_for_status()
+            except httpx.TimeoutException as e:
+                raise ModelTimeoutError(f"Hugging Face API timed out: {str(e)}") from e
+            except Exception as e:
+                raise ReelLabAIError(f"Hugging Face API call failed: {str(e)}") from e
+
+        res_json = response.json()
+        try:
+            raw_text = res_json["choices"][0]["message"]["content"]
+            # Clean potential markdown formatting
+            raw_text = raw_text.strip()
+            if raw_text.startswith("```json"):
+                raw_text = raw_text[7:]
+            if raw_text.startswith("```"):
+                raw_text = raw_text[3:]
+            if raw_text.endswith("```"):
+                raw_text = raw_text[:-3]
+            
+            data = json.loads(raw_text.strip())
+        except (KeyError, IndexError, json.JSONDecodeError) as e:
+            raise MalformedModelOutputError(f"Model returned unparseable JSON: {str(e)}")
+
+        if not isinstance(data, (dict, list)):
+            raise MalformedModelOutputError("Model returned non-dictionary/non-list response.")
+
+        usage_data = res_json.get("usage", {})
+        metadata = self.metadata_for(
+            model=model,
+            prompt_version=prompt_version,
+            started=started,
+            usage={
+                "input_tokens": usage_data.get("prompt_tokens", 0),
+                "output_tokens": usage_data.get("completion_tokens", 0),
+            }
+        )
+        return LLMResult(data=data, metadata=metadata)
+
+    async def _complete_anthropic(
+        self,
+        *,
+        model: str,
+        prompt: str,
+        prompt_version: str,
+        tier: str,
+        max_tokens: int,
+        media_path: str | None,
+        started: float,
+    ) -> LLMResult:
         try:
             import anthropic  # type: ignore
         except ImportError:
@@ -82,9 +206,6 @@ class LLMClient:
 
         if anthropic is None:
             raise NotImplementedError("Anthropic SDK is not installed.")
-            
-        started = time.perf_counter()
-        model = self.model_for(tier)
 
         client = anthropic.AsyncAnthropic(api_key=settings.api_key)  # type: ignore
         
@@ -155,8 +276,8 @@ class LLMClient:
             prompt_version=prompt_version,
             started=started,
             usage={
-                "input_tokens": res.usage.input_tokens,
-                "output_tokens": res.usage.output_tokens,
+                "input_tokens": getattr(res.usage, "input_tokens", 0),
+                "output_tokens": getattr(res.usage, "output_tokens", 0),
             }
         )
         return LLMResult(data=data, metadata=metadata)
