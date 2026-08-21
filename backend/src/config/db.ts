@@ -41,6 +41,10 @@ export async function connectDatabase(): Promise<DbStatus> {
     status = 'connected';
     logger.info('db_reconnected');
   });
+  mongoose.connection.on('error', (err) => {
+    status = 'unavailable';
+    logger.warn('db_error', { error: err instanceof Error ? err.message : String(err) });
+  });
 
   try {
     await mongoose.connect(config.mongoUri, {
