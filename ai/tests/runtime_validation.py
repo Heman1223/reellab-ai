@@ -186,7 +186,23 @@ async def main(video_path: str):
     if content_dna:
         try:
             print("Generating variants via Gemini reasoning...")
-            variants = await generate_variants(content_dna, count=2, lever="tone")
+            from schemas import SimulationResult
+            # Provide a dummy SimulationResult since we only want to test the model generation path
+            dummy_simulation = SimulationResult(
+                video_id=content_dna.video_id,
+                overall_score=0.5,
+                bottlenecks=[],
+                audience_segment_results=[]
+            )
+            variants, is_mock = await generate_variants(
+                content=content_dna, 
+                simulation=dummy_simulation, 
+                modification_type="tone", 
+                count=2
+            )
+            if is_mock:
+                print("[FAIL] Variants used fixture fallback.")
+                sys.exit(1)
             print(f"[PASS] Generated {len(variants)} counterfactual variants.")
             for v in variants:
                 if v.modified_lever != "tone":

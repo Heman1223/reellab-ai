@@ -1011,10 +1011,6 @@ async def with_fixture_fallback(
 
     Signature is frozen: Developer 2 calls this from two modules.
     """
-    if settings.is_mock_mode:
-        log_event(logger, "serving_fixture", operation=operation, reason="mock_mode")
-        return fixture(), True
-
     try:
         return await ai_call(), False
     except AVAILABILITY_ERRORS as exc:
