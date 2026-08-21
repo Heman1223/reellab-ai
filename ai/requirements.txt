@@ -1,0 +1,31 @@
+# ReelLab AI service — Python dependencies
+#
+# Deliberately small. Everything needed to run the service, validate contracts
+# and test it; nothing else. Add a dependency only when you are about to use it.
+
+fastapi>=0.115,<1.0
+uvicorn[standard]>=0.32,<1.0
+pydantic>=2.9,<3.0
+python-dotenv>=1.0,<2.0
+httpx>=0.27,<1.0
+python-multipart>=0.0.12
+
+# Testing
+pytest>=8.3,<9.0
+
+# ---------------------------------------------------------------------------
+# Not installed yet — uncomment when you actually need them.
+#
+# Model providers (Developer 1 and Developer 2, when wiring ai/llm.py):
+# anthropic>=0.40
+#
+# Video and audio (Developer 2, when building ai/video_analysis/):
+#   FFmpeg itself is a system binary, not a pip package — install it separately
+#   and make sure `ffmpeg -version` works before uncommenting these.
+# opencv-python-headless>=4.10
+# numpy>=2.0
+# faster-whisper>=1.0
+#
+# Evaluation metrics (Developer 1, when building ai/evaluation/metrics/):
+# scipy>=1.14
+# ---------------------------------------------------------------------------

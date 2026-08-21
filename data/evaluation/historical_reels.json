@@ -1,0 +1,52 @@
+{
+  "datasetId": "eval_fitness_in_v0",
+  "description": "Tiny hand-built evaluation set. Each entry pairs a reel we can simulate with its real-world outcome, so the harness can compare a predicted ranking against an actual one. Numbers here are illustrative placeholders — replace them with real creator analytics before drawing any conclusion.",
+  "audienceGraphId": "graph_fitness_in_001",
+  "items": [
+    {
+      "reelId": "eval_reel_001",
+      "title": "Three beginner mistakes (soft intro)",
+      "contentDnaRef": "data/mock_personas/content_dna.json",
+      "actual": {
+        "views": 4200,
+        "threeSecondRetention": 0.31,
+        "completionRate": 0.14,
+        "likeRate": 0.021,
+        "saveRate": 0.018,
+        "shareRate": 0.004,
+        "commentRate": 0.002
+      },
+      "actualRank": 3
+    },
+    {
+      "reelId": "eval_reel_002",
+      "title": "Programme hopping call-out (claim-first hook)",
+      "contentDnaRef": null,
+      "actual": {
+        "views": 38100,
+        "threeSecondRetention": 0.62,
+        "completionRate": 0.29,
+        "likeRate": 0.048,
+        "saveRate": 0.031,
+        "shareRate": 0.019,
+        "commentRate": 0.011
+      },
+      "actualRank": 1
+    },
+    {
+      "reelId": "eval_reel_003",
+      "title": "Home workout substitutions",
+      "contentDnaRef": null,
+      "actual": {
+        "views": 11400,
+        "threeSecondRetention": 0.48,
+        "completionRate": 0.36,
+        "likeRate": 0.033,
+        "saveRate": 0.061,
+        "shareRate": 0.006,
+        "commentRate": 0.008
+      },
+      "actualRank": 2
+    }
+  ]
+}

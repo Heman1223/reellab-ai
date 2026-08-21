@@ -1,0 +1,42 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    color-scheme: light;
+  }
+
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+
+  body {
+    @apply bg-ink-900 text-slate-800 antialiased;
+  }
+
+  /* Keyboard focus stays visible everywhere. */
+  :focus-visible {
+    @apply outline-none ring-2 ring-accent ring-offset-2 ring-offset-ink-900;
+  }
+}
+
+@layer components {
+  /* Three primitives used across every page. Anything more specific belongs in
+     a component, not here. */
+  .card {
+    @apply rounded-xl border border-ink-600 bg-ink-800 p-5;
+  }
+
+  .label {
+    @apply mb-1.5 block text-xs font-medium uppercase tracking-wider text-slate-500;
+  }
+
+  .input {
+    @apply w-full rounded-lg border border-ink-600 bg-ink-700 px-3 py-2 text-sm
+           text-slate-900 placeholder:text-slate-400
+           focus:border-accent focus:outline-none;
+  }
+}

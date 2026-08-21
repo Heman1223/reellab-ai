@@ -1,0 +1,19 @@
+# Normalise line endings so a Windows and a Linux machine produce identical
+# diffs. Without this, the team would spend the hackathon reviewing whitespace.
+* text=auto eol=lf
+
+# Shell scripts must be LF even on Windows — CRLF makes them fail on Linux and
+# in Docker with a "bad interpreter" error that is genuinely hard to diagnose.
+*.sh text eol=lf
+
+# Binary: never touch.
+*.png binary
+*.jpg binary
+*.svg text
+*.mp4 binary
+*.mov binary
+*.wav binary
+*.mp3 binary
+
+# Lockfiles are generated; collapse them in diffs and reviews.
+package-lock.json linguist-generated=true -diff

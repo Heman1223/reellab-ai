@@ -1,0 +1,96 @@
+{
+  "graphId": "graph_fitness_in_001",
+  "request": {
+    "niche": "fitness",
+    "targetAudience": "natural bodybuilding beginners",
+    "secondaryAudience": "college students interested in fitness",
+    "location": "India",
+    "language": "English",
+    "creatorGoal": "increase reach among beginners"
+  },
+  "segments": [
+    {
+      "id": "seg_fitness_in",
+      "name": "Fitness — India",
+      "description": "The full reachable fitness audience in India for English-language short-form content. Root node of the graph; not targeted directly.",
+      "parentSegment": null,
+      "characteristics": [
+        "mobile-first viewing",
+        "mixed English/Hinglish comprehension",
+        "high volume, low intent"
+      ],
+      "relevanceScore": 0.5,
+      "estimatedShare": 1,
+      "rationale": "Root niche derived directly from the creator's stated niche and location."
+    },
+    {
+      "id": "seg_beginner_lifters",
+      "name": "Beginner Natural Lifters",
+      "description": "0–12 months of consistent training, drug-free by conviction, actively looking for a routine they can trust. Highly suspicious of anyone who looks enhanced.",
+      "parentSegment": "seg_fitness_in",
+      "characteristics": [
+        "0-12 months training age",
+        "researches before committing",
+        "distrusts supplement pitches",
+        "saves routines for later",
+        "watches at night after gym"
+      ],
+      "relevanceScore": 0.94,
+      "estimatedShare": 0.34,
+      "rationale": "Direct match for the creator's stated primary audience and goal of increasing beginner reach."
+    },
+    {
+      "id": "seg_college_gym_starters",
+      "name": "College Gym Starters",
+      "description": "18–22, first six months in a campus or budget gym. Motivated by appearance and peer comparison more than by performance. Short attention, heavy share behaviour inside friend groups.",
+      "parentSegment": "seg_fitness_in",
+      "characteristics": [
+        "18-22 years old",
+        "trains with friends",
+        "appearance-driven motivation",
+        "very high share rate within close groups",
+        "low tolerance for slow intros"
+      ],
+      "relevanceScore": 0.81,
+      "estimatedShare": 0.29,
+      "rationale": "Matches the creator's stated secondary audience; also the strongest propagation vector into the primary segment."
+    },
+    {
+      "id": "seg_budget_home_trainees",
+      "name": "Budget Home Trainees",
+      "description": "Training at home with minimal equipment because of cost or gym access. Filter out anything that assumes a full commercial gym.",
+      "parentSegment": "seg_fitness_in",
+      "characteristics": [
+        "no gym access",
+        "price-sensitive",
+        "needs equipment-free alternatives",
+        "high save rate, low share rate"
+      ],
+      "relevanceScore": 0.62,
+      "estimatedShare": 0.21,
+      "rationale": "Adjacent sub-niche discovered from the location signal; commonly reached by spillover rather than by targeting."
+    }
+  ],
+  "adjacency": [
+    {
+      "fromSegmentId": "seg_college_gym_starters",
+      "toSegmentId": "seg_beginner_lifters",
+      "spilloverProbability": 0.46
+    },
+    {
+      "fromSegmentId": "seg_beginner_lifters",
+      "toSegmentId": "seg_budget_home_trainees",
+      "spilloverProbability": 0.23
+    },
+    {
+      "fromSegmentId": "seg_beginner_lifters",
+      "toSegmentId": "seg_college_gym_starters",
+      "spilloverProbability": 0.18
+    },
+    {
+      "fromSegmentId": "seg_budget_home_trainees",
+      "toSegmentId": "seg_college_gym_starters",
+      "spilloverProbability": 0.07
+    }
+  ]
+}

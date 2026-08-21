@@ -1,0 +1,87 @@
+{
+  "experimentId": "exp_001",
+  "originalSimulationId": "sim_001",
+  "hypothesis": "The reel is lost in the first 3 seconds, not in its content. Replacing the soft category-level intro with a hook that names a concrete cost should recover College Gym Starters and give the cascade something to carry.",
+  "modificationType": "hook",
+  "variants": [
+    {
+      "id": "var_a",
+      "label": "Hook A",
+      "changeSummary": "Replace the 4.2s soft intro with a 1.8s line that states the price of the mistake up front.",
+      "proposedChange": "I wasted a year of gains on three mistakes. Here's the first one.",
+      "simulationId": "sim_002",
+      "score": 0.72
+    },
+    {
+      "id": "var_b",
+      "label": "Hook B",
+      "changeSummary": "Open on a contestable claim designed to be forwarded to a group chat, and burn in captions from frame one.",
+      "proposedChange": "Changing your split every two weeks is why you look the same as last year.",
+      "simulationId": "sim_003",
+      "score": 0.86
+    },
+    {
+      "id": "var_c",
+      "label": "Hook C",
+      "changeSummary": "Start with a direct question that forces the viewer to evaluate themselves.",
+      "proposedChange": "Are you making these three mistakes in the gym?",
+      "simulationId": "sim_004",
+      "score": 0.75
+    }
+  ],
+  "comparison": [
+    {
+      "variantId": "var_a",
+      "scoreDelta": 0.08,
+      "segmentDeltas": {
+        "seg_beginner_lifters": 0.19,
+        "seg_college_gym_starters": 0.31,
+        "seg_budget_home_trainees": 0.04
+      },
+      "biggestGainSegmentId": "seg_college_gym_starters",
+      "confidence": 0.66
+    },
+    {
+      "variantId": "var_b",
+      "scoreDelta": 0.22,
+      "segmentDeltas": {
+        "seg_beginner_lifters": 0.14,
+        "seg_college_gym_starters": 0.52,
+        "seg_budget_home_trainees": -0.09
+      },
+      "biggestGainSegmentId": "seg_college_gym_starters",
+      "biggestLossSegmentId": "seg_budget_home_trainees",
+      "confidence": 0.58
+    },
+    {
+      "variantId": "var_c",
+      "scoreDelta": 0.11,
+      "segmentDeltas": {
+        "seg_beginner_lifters": 0.22,
+        "seg_college_gym_starters": 0.25,
+        "seg_budget_home_trainees": 0.05
+      },
+      "biggestGainSegmentId": "seg_college_gym_starters",
+      "confidence": 0.60
+    }
+  ],
+  "recommendation": {
+    "winningVariantId": "var_b",
+    "reasoning": "Variant B fixes both bottlenecks at once: it clears the 3-second window and gives College Gym Starters something arguable to forward, which is the only segment that can restart the cascade. It costs a little reach in Budget Home Trainees, who read the claim as confrontational — an acceptable trade given the creator's stated goal of beginner reach.",
+    "confidence": 0.58,
+    "caveats": [
+      "Confidence is below 0.6; the gap between Variant A and Variant B is within the noise of a 5-persona run.",
+      "Variant B's propagation gain assumes the share behaviour of College Gym Starters, which is the least-validated part of the model.",
+      "Re-run at depth 'standard' or higher before acting on the segment-level deltas."
+    ]
+  },
+  "status": "completed",
+  "createdAt": "2026-08-21T09:20:11.000Z",
+  "completedAt": "2026-08-21T09:22:03.000Z",
+  "metadata": {
+    "model": "fixture",
+    "promptVersion": "n/a",
+    "personaCount": 10,
+    "mock": true
+  }
+}

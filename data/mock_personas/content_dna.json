@@ -1,0 +1,80 @@
+{
+  "videoId": "reel_001",
+  "durationSeconds": 34,
+  "transcript": "So today I want to talk about something that I think a lot of people get wrong. When I started training I made three mistakes and honestly they cost me about a year of progress. The first one is that I was changing my programme every two weeks because I saw a new split online. The second is that I was tracking nothing, no weights, no reps, nothing. And the third is that I was eating way under maintenance without realising it. If you fix those three things you will grow. Follow for more.",
+  "topic": "Three common beginner training mistakes that stall natural muscle growth",
+  "hook": {
+    "text": "So today I want to talk about something that I think a lot of people get wrong.",
+    "durationSeconds": 4.2,
+    "type": "soft intro",
+    "strength": 0.31
+  },
+  "tone": "instructional",
+  "emotion": "reflective",
+  "scenes": [
+    {
+      "index": 0,
+      "startSeconds": 0,
+      "endSeconds": 4.2,
+      "description": "Creator seated, static mid-shot, speaking directly to camera with no on-screen text yet.",
+      "shotType": "talking head",
+      "energy": 0.22
+    },
+    {
+      "index": 1,
+      "startSeconds": 4.2,
+      "endSeconds": 14.0,
+      "description": "Same framing, first mistake explained, a text card appears reading 'Mistake 1: programme hopping'.",
+      "shotType": "talking head",
+      "energy": 0.38
+    },
+    {
+      "index": 2,
+      "startSeconds": 14.0,
+      "endSeconds": 23.5,
+      "description": "Cut to b-roll of a training log app, voice-over continues about tracking.",
+      "shotType": "b-roll",
+      "energy": 0.44
+    },
+    {
+      "index": 3,
+      "startSeconds": 23.5,
+      "endSeconds": 31.0,
+      "description": "Back to talking head for the third mistake about under-eating, no visual aid.",
+      "shotType": "talking head",
+      "energy": 0.35
+    },
+    {
+      "index": 4,
+      "startSeconds": 31.0,
+      "endSeconds": 34.0,
+      "description": "Creator says 'follow for more' with a small text overlay in the lower third.",
+      "shotType": "talking head",
+      "energy": 0.29
+    }
+  ],
+  "visualFeatures": {
+    "cutsPerSecond": 0.12,
+    "hasOnScreenText": true,
+    "facePresence": 0.79,
+    "dominantColors": ["#2b2b30", "#c9a227", "#f2f2f2"],
+    "productionQuality": 0.66
+  },
+  "audioFeatures": {
+    "hasSpeech": true,
+    "hasMusic": false,
+    "wordsPerMinute": 158,
+    "energy": 0.41,
+    "language": "English"
+  },
+  "cta": {
+    "present": true,
+    "text": "Follow for more",
+    "atSecond": 31,
+    "type": "follow"
+  },
+  "warnings": [
+    "Hook occupies 4.2s, longer than the 3s window most short-form viewers allow.",
+    "No captions burned in for the first 4 seconds; muted viewers see no text."
+  ]
+}
