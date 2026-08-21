@@ -59,6 +59,12 @@ def _get_model() -> WhisperModel:
     if _model is None:
         if WhisperModel is None:
             raise AINotConfiguredError("faster-whisper is not installed")
+        # NOTE(Developer 2): This is technically vulnerable to a race condition
+        # if multiple concurrent async requests block the event loop simultaneously
+        # by calling the synchronous transcribe() method on their first run.
+        # However, since transcribe() blocks the event loop anyway, concurrency
+        # is functionally serialized. We accept this limitation for the hackathon
+        # rather than overengineering threading infrastructure.
         _model = WhisperModel("base", device="cpu", compute_type="int8")
     return _model
 
