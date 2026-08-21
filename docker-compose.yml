@@ -1,0 +1,94 @@
+# ReelLab — local stack.
+#
+#   docker compose up --build
+#
+# Four services: mongo, ai, backend, frontend. No Redis — nothing needs a job
+# queue yet, and adding one "for the architecture" would be a dependency we pay
+# for and never use.
+#
+# Docker is the fallback, not the primary workflow. Running the three services
+# natively (see the root README) is faster to iterate on during a hackathon;
+# this exists so a new machine can get the whole stack up in one command.
+#
+# Build contexts are the repo root because the backend and the AI service both
+# read `shared/` and `data/`.
+
+services:
+  mongo:
+    image: mongo:7
+    restart: unless-stopped
+    ports:
+      - '27017:27017'
+    volumes:
+      - mongo_data:/data/db
+    healthcheck:
+      test: ['CMD', 'mongosh', '--quiet', '--eval', "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  ai:
+    build:
+      context: .
+      dockerfile: ai/Dockerfile
+    restart: unless-stopped
+    ports:
+      - '8000:8000'
+    environment:
+      AI_HOST: 0.0.0.0
+      AI_PORT: '8000'
+      AI_PROVIDER: ${AI_PROVIDER:-mock}
+      AI_API_KEY: ${AI_API_KEY:-}
+      MULTIMODAL_MODEL: ${MULTIMODAL_MODEL:-claude-sonnet-5}
+      REASONING_MODEL: ${REASONING_MODEL:-claude-opus-5}
+      AI_MAX_PERSONAS: ${AI_MAX_PERSONAS:-25}
+    volumes:
+      # Fixtures and uploads are read at runtime, so mount rather than bake.
+      - ./data:/app/data:ro
+      - ./uploads:/app/uploads
+    healthcheck:
+      test: ['CMD', 'python', '-c', "import urllib.request;urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    restart: unless-stopped
+    ports:
+      - '4000:4000'
+    environment:
+      NODE_ENV: production
+      PORT: '4000'
+      MONGODB_URI: mongodb://mongo:27017/reellab
+      AI_SERVICE_URL: http://ai:8000
+      FRONTEND_URL: http://localhost:5173
+      AI_PROVIDER: ${AI_PROVIDER:-mock}
+      UPLOAD_DIR: /app/uploads
+    volumes:
+      - ./data:/app/data:ro
+      - ./uploads:/app/uploads
+    depends_on:
+      mongo:
+        condition: service_healthy
+      ai:
+        condition: service_started
+
+  frontend:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+      args:
+        # Vite inlines env vars at build time, so this is a build arg.
+        VITE_API_BASE_URL: http://localhost:4000/api/v1
+        VITE_USE_MOCKS: 'false'
+    restart: unless-stopped
+    ports:
+      - '5173:80'
+    depends_on:
+      - backend
+
+volumes:
+  mongo_data:

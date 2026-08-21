@@ -1,0 +1,33 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["ES2022"],
+    "module": "commonjs",
+    "moduleResolution": "node",
+
+    /* `rootDir` is the repo root, not `src`, because the type-only contracts in
+       `../shared/schemas` are part of this compilation. That means the build
+       lands in `dist/backend/src/` — see the `start` script in package.json.
+       Shared imports must always use `import type` so they are erased and never
+       become a runtime `require('@shared/...')`. */
+    "rootDir": "..",
+    "outDir": "dist",
+    "baseUrl": ".",
+    "paths": {
+      "@shared/*": ["../shared/*"]
+    },
+
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "noImplicitOverride": true,
+    "esModuleInterop": true,
+    "resolveJsonModule": true,
+    "forceConsistentCasingInFileNames": true,
+    "skipLibCheck": true,
+    "sourceMap": true,
+    "declaration": false,
+    "types": ["node", "jest"]
+  },
+  "include": ["src/**/*", "../shared/schemas/**/*"],
+  "exclude": ["node_modules", "dist"]
+}

@@ -1,0 +1,190 @@
+{
+  "simulationId": "sim_001",
+  "status": "completed",
+  "reelId": "reel_001",
+  "graphId": "graph_fitness_in_001",
+  "overallScore": 0.38,
+  "confidence": 0.64,
+  "audienceResults": [
+    {
+      "personaId": "persona_001",
+      "watchProbability": 0.71,
+      "completionProbability": 0.48,
+      "likeProbability": 0.29,
+      "saveProbability": 0.55,
+      "shareProbability": 0.08,
+      "commentProbability": 0.06,
+      "swipeTime": null,
+      "action": "save",
+      "reason": "The opening line told me nothing, but I stayed because 'three mistakes' promised a list I could act on. Programme hopping and not tracking are exactly my problems, so I saved it. I would not send this to anyone — there is no single line worth quoting.",
+      "confidence": 0.72
+    },
+    {
+      "personaId": "persona_002",
+      "watchProbability": 0.34,
+      "completionProbability": 0.16,
+      "likeProbability": 0.11,
+      "saveProbability": 0.14,
+      "shareProbability": 0.05,
+      "commentProbability": 0.02,
+      "swipeTime": 3.4,
+      "action": "swipe",
+      "reason": "I was watching muted and there was no text on screen for the first few seconds, so I had no idea what this was about. I swiped before the first mistake was even named.",
+      "confidence": 0.81
+    },
+    {
+      "personaId": "persona_003",
+      "watchProbability": 0.18,
+      "completionProbability": 0.05,
+      "likeProbability": 0.06,
+      "saveProbability": 0.02,
+      "shareProbability": 0.03,
+      "commentProbability": 0.02,
+      "swipeTime": 2.6,
+      "action": "swipe",
+      "reason": "Static shot, slow voice, and the first sentence is just throat-clearing. Nothing happened, so I was gone before he said anything real.",
+      "confidence": 0.86
+    },
+    {
+      "personaId": "persona_004",
+      "watchProbability": 0.41,
+      "completionProbability": 0.19,
+      "likeProbability": 0.14,
+      "saveProbability": 0.21,
+      "shareProbability": 0.09,
+      "commentProbability": 0.04,
+      "swipeTime": 4.9,
+      "action": "swipe",
+      "reason": "I gave it a few seconds because the tone felt calm and not intimidating, but it took too long to tell me what I would get out of it and I moved on.",
+      "confidence": 0.69
+    },
+    {
+      "personaId": "persona_005",
+      "watchProbability": 0.83,
+      "completionProbability": 0.74,
+      "likeProbability": 0.31,
+      "saveProbability": 0.62,
+      "shareProbability": 0.04,
+      "commentProbability": 0.19,
+      "swipeTime": null,
+      "action": "complete",
+      "reason": "None of the three mistakes needed a gym, which is rare. Tracking and under-eating apply to me exactly. I saved it and I would probably comment asking about home substitutions.",
+      "confidence": 0.75
+    }
+  ],
+  "propagationWaves": [
+    {
+      "wave": 0,
+      "segmentIds": ["seg_beginner_lifters", "seg_college_gym_starters"],
+      "reach": 1000,
+      "passThroughRate": 0.08,
+      "terminated": false,
+      "note": "Seed audience. Retention past 3s is the limiting factor, not distribution."
+    },
+    {
+      "wave": 1,
+      "segmentIds": ["seg_budget_home_trainees"],
+      "reach": 80,
+      "passThroughRate": 0.04,
+      "terminated": false,
+      "note": "Reached almost entirely through saves rather than shares, which propagate far more weakly."
+    },
+    {
+      "wave": 2,
+      "segmentIds": [],
+      "reach": 3,
+      "passThroughRate": 0,
+      "terminated": true,
+      "note": "Cascade dies. College Gym Starters is the natural amplifier for this niche and it never engaged, so there is nothing to carry the reel outward."
+    }
+  ],
+  "audienceSegmentResults": [
+    {
+      "segmentId": "seg_beginner_lifters",
+      "segmentName": "Beginner Natural Lifters",
+      "score": 0.52,
+      "averageWatchProbability": 0.53,
+      "averageCompletionProbability": 0.32,
+      "shareRate": 0.07,
+      "saveRate": 0.35,
+      "personaCount": 2,
+      "confidence": 0.77,
+      "verdict": "mixed"
+    },
+    {
+      "segmentId": "seg_college_gym_starters",
+      "segmentName": "College Gym Starters",
+      "score": 0.24,
+      "averageWatchProbability": 0.3,
+      "averageCompletionProbability": 0.12,
+      "shareRate": 0.06,
+      "saveRate": 0.12,
+      "personaCount": 2,
+      "confidence": 0.78,
+      "verdict": "weak"
+    },
+    {
+      "segmentId": "seg_budget_home_trainees",
+      "segmentName": "Budget Home Trainees",
+      "score": 0.71,
+      "averageWatchProbability": 0.83,
+      "averageCompletionProbability": 0.74,
+      "shareRate": 0.04,
+      "saveRate": 0.62,
+      "personaCount": 1,
+      "confidence": 0.55,
+      "verdict": "strong"
+    }
+  ],
+  "bottlenecks": [
+    {
+      "id": "bn_001",
+      "stage": "hook",
+      "segmentIds": ["seg_college_gym_starters", "seg_beginner_lifters"],
+      "description": "Four out of five personas made their decision before the first mistake was named. The 4.2s hook is longer than the attention budget of every persona in College Gym Starters.",
+      "likelyCause": "The opening line ('something a lot of people get wrong') states a category, not a stake. It defers the payoff past the point where the fastest-swiping segment has already left.",
+      "severity": 0.82,
+      "confidence": 0.79
+    },
+    {
+      "id": "bn_002",
+      "stage": "propagation",
+      "segmentIds": ["seg_college_gym_starters"],
+      "description": "The reel converts through saves, not shares. Saves do not propagate, so the cascade terminates at wave 2.",
+      "likelyCause": "There is no single quotable or arguable claim. College Gym Starters shares content that starts an argument in a group chat; a calm three-item list gives them nothing to forward.",
+      "severity": 0.64,
+      "confidence": 0.61
+    },
+    {
+      "id": "bn_003",
+      "stage": "retention",
+      "segmentIds": ["seg_beginner_lifters"],
+      "description": "Muted viewers get no on-screen text until 4.2s.",
+      "likelyCause": "Captions are not burned in over the hook, so a viewer watching without sound cannot tell what the reel is about during the exact window in which they decide.",
+      "severity": 0.47,
+      "confidence": 0.83
+    }
+  ],
+  "warnings": [
+    {
+      "code": "LOW_PERSONA_COUNT",
+      "message": "Only 5 personas were simulated. Segment-level confidence is limited, especially for Budget Home Trainees (1 persona).",
+      "severity": "warning"
+    },
+    {
+      "code": "MOCK_DATA",
+      "message": "This result is a development fixture, not a model output.",
+      "severity": "info"
+    }
+  ],
+  "createdAt": "2026-08-21T09:12:04.000Z",
+  "completedAt": "2026-08-21T09:12:51.000Z",
+  "metadata": {
+    "model": "fixture",
+    "promptVersion": "n/a",
+    "latencyMs": 0,
+    "personaCount": 5,
+    "simulationDurationMs": 47000,
+    "mock": true
+  }
+}
