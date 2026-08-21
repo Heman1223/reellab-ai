@@ -1,4 +1,4 @@
-import pytest
+import pytest  # type: ignore
 import asyncio
 from counterfactual.generation.variants import generate_variants
 from errors import MalformedModelOutputError

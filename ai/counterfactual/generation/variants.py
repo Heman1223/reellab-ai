@@ -21,6 +21,7 @@ from __future__ import annotations
 
 import uuid
 
+from errors import MalformedModelOutputError
 from llm import llm, with_fixture_fallback
 from logging_utils import get_logger, log_event
 from schemas import ContentDNA, ModificationType, SimulationResult, Variant
@@ -134,9 +135,10 @@ async def generate_variants(
     count: int = 2,
     instruction: str | None = None,
 ) -> tuple[list[Variant], bool]:
-    \"\"\"Generate counterfactual variants. Returns `(variants, mock)`.\"\"\"
+    """Generate counterfactual variants. Returns `(variants, mock)`."""
     if count <= 0:
         return [], False
+
 
     variants, mock = await with_fixture_fallback(
         "counterfactual.generate",

@@ -45,7 +45,7 @@ class Transcript:
 
 
 try:
-    from faster_whisper import WhisperModel
+    from faster_whisper import WhisperModel  # type: ignore
 except ImportError:
     WhisperModel = None
 

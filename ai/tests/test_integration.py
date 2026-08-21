@@ -1,4 +1,4 @@
-import pytest
+import pytest  # type: ignore
 import asyncio
 from pathlib import Path
 import tempfile
