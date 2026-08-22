@@ -55,18 +55,28 @@ export async function analyzeReel(
 
   if (input.reelId) {
     reel = getReel(input.reelId);
-    videoPath = path.resolve(reel.storagePath);
+    
+    // On Render, the backend and AI service do not share a disk. We must pass
+    // an HTTP URL so the AI service can download it from us.
+    if (process.env.RENDER_EXTERNAL_URL) {
+      videoPath = `${process.env.RENDER_EXTERNAL_URL}/${reel.storagePath}`;
+    } else {
+      videoPath = path.resolve(reel.storagePath);
+    }
   } else if (videoPath) {
-    videoPath = path.resolve(videoPath);
+    // Already an absolute path or a URL
+    if (!videoPath.startsWith('http')) {
+      videoPath = path.resolve(videoPath);
+    }
   }
 
   if (!videoPath) {
     throw ApiError.validation('Provide either `reelId` or `videoPath`.');
   }
 
-  // Only enforce existence for a real analysis run. In mock mode the path is
-  // allowed to be fictional so the frontend can drive the flow end to end.
-  if (!fs.existsSync(videoPath) && !isMockMode()) {
+  // Only enforce existence for a real analysis run on local files.
+  // In mock mode or when using URLs, skip local file checks.
+  if (!videoPath.startsWith('http') && !fs.existsSync(videoPath) && !isMockMode()) {
     throw new ApiError('UPLOAD_FAILED', `No file at '${videoPath}'.`);
   }
 

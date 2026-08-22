@@ -17,6 +17,8 @@ import tempfile
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
+import urllib.request
+import urllib.parse
 
 from errors import UnsupportedVideoError
 
@@ -122,6 +124,21 @@ def _run_subprocess(cmd: list[str], error_message: str) -> subprocess.CompletedP
 
 def extract_media(video_path: str | Path, max_frames: int = 10) -> ExtractedMedia:
     """Pull frames and the audio track out of a reel."""
+    is_url = str(video_path).startswith("http://") or str(video_path).startswith("https://")
+    
+    temp_dir = tempfile.TemporaryDirectory(prefix="reellab_media_")
+    temp_path = Path(temp_dir.name)
+    
+    if is_url:
+        url = str(video_path)
+        download_path = temp_path / "downloaded_video.mp4"
+        try:
+            urllib.request.urlretrieve(url, download_path)
+            video_path = download_path
+        except Exception as e:
+            temp_dir.cleanup()
+            raise UnsupportedVideoError(f"Failed to download video from URL: {e}")
+            
     path = validate_video(video_path)
 
     if not ffmpeg_available():
@@ -161,9 +178,6 @@ def extract_media(video_path: str | Path, max_frames: int = 10) -> ExtractedMedi
     width = int(video_streams[0].get("width", 0))
     height = int(video_streams[0].get("height", 0))
     has_audio = len(audio_streams) > 0
-
-    temp_dir = tempfile.TemporaryDirectory(prefix="reellab_media_")
-    temp_path = Path(temp_dir.name)
     
     try:
         timestamps = get_sampling_timestamps(duration, max_frames)

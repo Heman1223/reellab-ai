@@ -35,6 +35,9 @@ export function createApp(): Express {
   app.use(express.urlencoded({ extended: true }));
   app.use(requestLogger);
 
+  // Expose uploads publicly so the AI service can download them
+  app.use('/uploads', express.static(config.uploadDir));
+
   app.get('/', (_req, res) => {
     res.json({
       service: 'reellab-backend',
