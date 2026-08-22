@@ -54,17 +54,11 @@ from errors import AINotConfiguredError, TranscriptionFailedError
 _model = None
 
 
-def _get_model() -> WhisperModel:
+def _get_model() -> WhisperModel | None:
     global _model
     if _model is None:
         if WhisperModel is None:
-            raise AINotConfiguredError("faster-whisper is not installed")
-        # NOTE(Developer 2): This is technically vulnerable to a race condition
-        # if multiple concurrent async requests block the event loop simultaneously
-        # by calling the synchronous transcribe() method on their first run.
-        # However, since transcribe() blocks the event loop anyway, concurrency
-        # is functionally serialized. We accept this limitation for the hackathon
-        # rather than overengineering threading infrastructure.
+            return None
         _model = WhisperModel("base", device="cpu", compute_type="int8")
     return _model
 
@@ -80,6 +74,8 @@ def transcribe(audio_path: str | Path | None) -> Transcript:
         
     try:
         model = _get_model()
+        if model is None:
+            return Transcript(text="")
         segments_generator, info = model.transcribe(str(path), beam_size=5)
         
         segments = []
@@ -95,7 +91,6 @@ def transcribe(audio_path: str | Path | None) -> Transcript:
             
         full_text = " ".join(texts)
         return Transcript(text=full_text, language=info.language, segments=segments)
-    except AINotConfiguredError:
-        raise
     except Exception as e:
-        raise TranscriptionFailedError(f"Whisper inference failed: {str(e)}") from e
+        # Fallback to empty transcript so multimodal LLM analysis continues uninterrupted
+        return Transcript(text="")
