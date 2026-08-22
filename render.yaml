@@ -3,6 +3,7 @@ services:
   - type: web
     name: reellab-ai
     env: docker
+    plan: free
     dockerfilePath: ai/Dockerfile
     dockerContext: .
     envVars:
@@ -25,6 +26,7 @@ services:
   - type: web
     name: reellab-backend
     env: node
+    plan: free
     buildCommand: "cd backend && npm install && npm run build"
     startCommand: "cd backend && npm start"
     envVars:
@@ -42,6 +44,7 @@ services:
   - type: web
     name: reellab-frontend
     env: static
+    plan: free
     buildCommand: "export VITE_API_BASE_URL=$BACKEND_URL/api/v1 && cd frontend && npm install && npm run build"
     staticPublishPath: frontend/dist
     routes:
