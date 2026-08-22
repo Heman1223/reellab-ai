@@ -1,7 +1,7 @@
 import { Card, EmptyState, MockBanner, StatTile } from '@/components/ui';
 import { PropagationGraph } from '@/components/PropagationGraph';
 import { useLabState } from '@/hooks/useLabState';
-import { mockAudienceGraph, mockSimulationResult } from '@/mock';
+import { mockSimulationResult } from '@/mock';
 import { compactNumber } from '@/utils/format';
 
 /**

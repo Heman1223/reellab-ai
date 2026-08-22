@@ -1,6 +1,6 @@
 import { Badge, Card, EmptyState, MockBanner, PageHeader, ScoreBar } from '@/components/ui';
 import { useLabState } from '@/hooks/useLabState';
-import { percent, seconds } from '@/utils/format';
+import { seconds } from '@/utils/format';
 import type { PersonaSimulationResult, ViewerAction } from '@/types';
 
 /**
