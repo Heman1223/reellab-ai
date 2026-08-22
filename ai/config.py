@@ -96,7 +96,7 @@ class Settings:
 
     # Cost guard rails. See docs/architecture.md#cost-aware-architecture.
     max_personas: int = _int("AI_MAX_PERSONAS", 25)
-    request_timeout_seconds: int = _int("AI_REQUEST_TIMEOUT_SECONDS", 30)
+    request_timeout_seconds: int = _int("AI_REQUEST_TIMEOUT_SECONDS", 60)
 
     def is_configured_for(self, tier: str) -> bool:
         """True if the provider for the specified tier has credentials."""
