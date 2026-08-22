@@ -41,6 +41,11 @@ services:
           type: web
           name: reellab-ai
           envVarKey: RENDER_EXTERNAL_URL
+      - key: FRONTEND_URL
+        fromService:
+          type: web
+          name: reellab-frontend
+          envVarKey: RENDER_EXTERNAL_URL
       - key: MONGODB_URI
         sync: false
       
