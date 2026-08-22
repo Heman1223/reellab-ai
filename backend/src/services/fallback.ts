@@ -38,6 +38,9 @@ export async function withFixtureFallback<T>(
     return { data: await callAi(), mock: false };
   } catch (error) {
     if (isApiError(error) && FALLBACK_CODES.has(error.code)) {
+      if (process.env.VITE_USE_MOCKS === 'false' || process.env.AI_PROVIDER !== 'mock') {
+        throw error;
+      }
       logger.warn('ai_unavailable_serving_fixture', {
         operation,
         code: error.code,

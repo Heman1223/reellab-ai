@@ -1,0 +1,56 @@
+services:
+  # AI Service (Python / FastAPI)
+  - type: web
+    name: reellab-ai
+    env: docker
+    dockerfilePath: ai/Dockerfile
+    dockerContext: .
+    envVars:
+      - key: AI_PROVIDER
+        value: openai
+      - key: VIDEO_PROVIDER
+        value: gemini
+      - key: VIDEO_MODEL
+        value: gemini-3.7-flash
+      - key: REASONING_MODEL
+        value: meta-llama/llama-3.1-70b-instruct
+      - key: OPENAI_API_BASE
+        value: https://openrouter.ai/api/v1/chat/completions
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: GEMINI_API_KEY
+        sync: false
+
+  # Backend Service (Node.js)
+  - type: web
+    name: reellab-backend
+    env: node
+    buildCommand: "cd backend && npm install && npm run build"
+    startCommand: "cd backend && npm start"
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: AI_SERVICE_URL
+        fromService:
+          type: web
+          name: reellab-ai
+          envVarKey: RENDER_EXTERNAL_URL
+      - key: MONGODB_URI
+        sync: false
+      
+  # Frontend (Static Site)
+  - type: web
+    name: reellab-frontend
+    env: static
+    buildCommand: "export VITE_API_BASE_URL=$BACKEND_URL/api/v1 && cd frontend && npm install && npm run build"
+    staticPublishPath: frontend/dist
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+    envVars:
+      - key: BACKEND_URL
+        fromService:
+          type: web
+          name: reellab-backend
+          envVarKey: RENDER_EXTERNAL_URL

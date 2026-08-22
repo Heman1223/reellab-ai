@@ -41,6 +41,7 @@ export default function SimulationProgressPage() {
     setSetupError(null);
     setIsRunning(true);
     let currentGraphId = graph?.graphId;
+    let segmentsCount = graph?.segments?.length || 1;
 
     try {
       // 1. Discover Audience
@@ -49,8 +50,11 @@ export default function SimulationProgressPage() {
       if (audienceRes) {
         setGraph(audienceRes.data);
         currentGraphId = audienceRes.data.graphId;
+        segmentsCount = audienceRes.data.segments?.length || 1;
       }
       
+      const personasPerSegment = Math.ceil(10 / Math.max(1, segmentsCount));
+
       // 2. Run Simulation
       setStage(1); // will progress automatically via timer, but advance here too
       const result = await simulation.run({
@@ -58,6 +62,7 @@ export default function SimulationProgressPage() {
         contentDna: contentDna ?? undefined,
         graphId: currentGraphId,
         depth: 'standard', // fixed depth for presentation
+        personasPerSegment,
       });
 
       if (result) {

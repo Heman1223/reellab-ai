@@ -86,7 +86,7 @@ async def handle_reellab_error(request: Request, exc: ReelLabAIError) -> JSONRes
         "request_failed",
         path=request.url.path,
         code=exc.code,
-        message=exc.message,
+        error_message=exc.message,
     )
     return JSONResponse(status_code=exc.http_status, content={"error": exc.to_payload()})
 

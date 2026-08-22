@@ -80,29 +80,40 @@ async def _analyze_with_model(video_path: str, video_id: str) -> ContentDNA:
             logger.warning("Transcription failed, continuing with visual analysis only. Error: %s", str(e))
             transcript = Transcript(text="")
             
-        result = await llm.complete_json(
+        print("[VIDEO] provider: gemini")
+        # In llm.py, tier="multimodal" is used, so the model is settings.multimodal_model
+        from config import settings
+        print(f"[VIDEO] model: {settings.multimodal_model}")
+        print("[VIDEO] Gemini request started")
+        
+        from llm import MediaAttachment
+        attachment = MediaAttachment.from_path(str(media.frame_paths[0].parent))
+        attachments = [attachment] if attachment else []
+        
+        dna, metadata = await llm.complete_model(
+            ContentDNA,
             prompt=_build_prompt(transcript=transcript.text, duration_seconds=media.duration_seconds),
             prompt_version=PROMPT_VERSION,
             tier="multimodal",
-            media_path=str(media.frame_paths[0].parent),
+            media=attachments,
         )
+        print("[VIDEO] Gemini response received")
         
         try:
-            if isinstance(result.data, dict):
-                result.data["duration_seconds"] = media.duration_seconds
-                result.data["transcript"] = transcript.text
-                
-                audio = result.data.get("audio_features")
-                if not isinstance(audio, dict):
-                    audio = {}
-                audio["has_speech"] = not transcript.is_empty
-                audio["words_per_minute"] = transcript.words_per_minute
-                if transcript.language:
-                    audio["language"] = transcript.language
-                result.data["audio_features"] = audio
-                
-            dna = ContentDNA.model_validate(result.data)
+            # Re-populate the deterministic fields the LLM didn't (or shouldn't) guess
+            dna.duration_seconds = media.duration_seconds
+            dna.transcript = transcript.text
+            dna.video_id = video_id
             
+            if not dna.audio_features:
+                from schemas.content import AudioFeatures
+                dna.audio_features = AudioFeatures(has_speech=False, has_music=False, words_per_minute=0.0, energy=0.0)
+            
+            dna.audio_features.has_speech = not transcript.is_empty
+            dna.audio_features.words_per_minute = transcript.words_per_minute
+            if transcript.language:
+                dna.audio_features.language = transcript.language
+                
             for scene in dna.scenes:
                 scene.end_seconds = max(0.0, min(scene.end_seconds, media.duration_seconds))
                 scene.start_seconds = max(0.0, min(scene.start_seconds, media.duration_seconds))
@@ -112,7 +123,8 @@ async def _analyze_with_model(video_path: str, video_id: str) -> ContentDNA:
         except Exception as e:
             raise MalformedModelOutputError(f"Validation failed for ContentDNA: {str(e)}") from e
             
-        return dna.model_copy(update={"video_id": video_id})
+        print("[VIDEO] ContentDNA validation passed")
+        return dna
 
 
 def _fixture_dna(video_id: str) -> ContentDNA:

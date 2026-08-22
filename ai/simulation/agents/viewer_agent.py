@@ -166,6 +166,8 @@ def _coerce(reaction: _ViewerReaction, persona: Persona, content: ContentDNA) ->
 
     return PersonaSimulationResult(
         persona_id=persona.id,
+        persona_name=persona.name,
+        demographic_summary=persona.demographic_summary,
         watch_probability=watch,
         completion_probability=completion,
         like_probability=like,
@@ -244,6 +246,8 @@ def failed_result(persona: Persona, error: str) -> PersonaSimulationResult:
     """
     return PersonaSimulationResult(
         persona_id=persona.id,
+        persona_name=persona.name,
+        demographic_summary=persona.demographic_summary,
         watch_probability=0.0,
         completion_probability=0.0,
         like_probability=0.0,

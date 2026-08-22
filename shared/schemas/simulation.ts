@@ -46,6 +46,8 @@ export interface SimulationRequest {
   /** Explicit persona ids; when omitted the engine selects from the graph. */
   personaIds?: string[];
   depth?: SimulationDepth;
+  /** Explicitly request a specific number of personas per segment. */
+  personasPerSegment?: number;
   /** Set when this run evaluates a counterfactual variant. */
   variantId?: string;
 }
@@ -58,6 +60,8 @@ export interface SimulationRequest {
  */
 export interface PersonaSimulationResult {
   personaId: string;
+  personaName: string;
+  demographicSummary: string;
   watchProbability: UnitScore;
   completionProbability: UnitScore;
   likeProbability: UnitScore;

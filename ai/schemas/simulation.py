@@ -32,6 +32,7 @@ class SimulationRequest(ReelLabModel):
     graph_id: str | None = None
     persona_ids: list[str] = Field(default_factory=list)
     depth: SimulationDepth = "standard"
+    personas_per_segment: int | None = None
     variant_id: str | None = None
 
 
@@ -45,6 +46,8 @@ class PersonaSimulationResult(ReelLabModel):
     """
 
     persona_id: str
+    persona_name: str
+    demographic_summary: str
     watch_probability: float = Field(ge=0.0, le=1.0)
     completion_probability: float = Field(ge=0.0, le=1.0)
     like_probability: float = Field(ge=0.0, le=1.0)

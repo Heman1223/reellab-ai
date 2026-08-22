@@ -1,10 +1,9 @@
 import { useState } from 'react';
 
 
-import { Badge, Button, Card, ErrorNote, Loading } from '@/components/ui';
+import { Badge, Button, Card, EmptyState, ErrorNote, Loading } from '@/components/ui';
 import { useAsync } from '@/hooks/useAsync';
 import { useLabState } from '@/hooks/useLabState';
-import { mockSimulationResult } from '@/mock';
 import { createExperiment } from '@/services/reellabApi';
 import { cn } from '@/utils/format';
 import type { ModificationType } from '@/types';
@@ -30,12 +29,17 @@ const LEVERS: { value: ModificationType; label: string; question: string }[] = [
 
 export default function ExperimentsPage() {
   const { simulation, setExperiment } = useLabState();
-  const baseline = simulation ?? mockSimulationResult;
 
   const [lever, setLever] = useState<ModificationType>('hook');
   const [instruction, setInstruction] = useState('');
 
   const experiment = useAsync(createExperiment);
+
+  if (!simulation) {
+    return <EmptyState title="No simulation yet." hint="Run a simulation first to unlock counterfactual experiments." />;
+  }
+
+  const baseline = simulation;
 
   async function run() {
     const created = await experiment.run({

@@ -67,7 +67,11 @@ export default function ResultsDashboardPage() {
         subtitle="Where the reel loses people, and the model's hypothesis for why"
       >
         {result.bottlenecks.length === 0 ? (
-          <p className="text-sm text-slate-500">No bottlenecks identified. Excellent retention.</p>
+          <p className="text-sm text-slate-500">
+            {result.status === 'failed' || result.audienceResults.filter(r => !r.error).length === 0
+              ? 'Insufficient simulation data.'
+              : 'No bottlenecks identified. Excellent retention.'}
+          </p>
         ) : (
           <ul className="space-y-6">
             {[...result.bottlenecks]

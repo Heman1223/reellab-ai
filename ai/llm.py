@@ -332,10 +332,10 @@ class OpenAIProvider:
     """OpenAI Chat Completions with a strict JSON schema response format."""
 
     name = "openai"
-    endpoint = "https://api.openai.com/v1/chat/completions"
 
-    def __init__(self, api_key: str) -> None:
+    def __init__(self, api_key: str, endpoint: str = "https://api.openai.com/v1/chat/completions") -> None:
         self._api_key = api_key
+        self.endpoint = endpoint
 
     async def generate_structured(
         self,
@@ -769,6 +769,11 @@ class LLMClient:
             if not token.strip():
                 raise AINotConfiguredError("HF_TOKEN is empty (required for huggingface provider).")
             return factory(token)
+        if provider_name == "openai":
+            token = settings.openai_api_key or settings.api_key
+            if not token.strip():
+                raise AINotConfiguredError("OPENAI_API_KEY is empty (required for openai provider).")
+            return factory(token, endpoint=settings.openai_api_base)
         if not settings.api_key.strip():
             raise AINotConfiguredError("AI_API_KEY is empty.")
         return factory(settings.api_key)
@@ -1011,6 +1016,12 @@ async def with_fixture_fallback(
 
     Signature is frozen: Developer 2 calls this from two modules.
     """
+    if not settings.is_mock_mode:
+        # In production, do not catch AVAILABILITY_ERRORS to serve mock data.
+        # Genuine QuotaExhaustedError or AINotConfiguredError must bubble up to
+        # the user instead of pretending the run succeeded using a fixture.
+        return await ai_call(), False
+
     try:
         return await ai_call(), False
     except AVAILABILITY_ERRORS as exc:

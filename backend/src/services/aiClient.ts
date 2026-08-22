@@ -62,13 +62,44 @@ async function request<T>(
   const latencyMs = Date.now() - started;
 
   if (!response.ok) {
-    const detail = await response.text().catch(() => '');
     recordAiCall({ operation: endpoint, success: false, latencyMs });
+    
+    let detail = '';
+    let aiMessage = '';
+    let aiCode: string | undefined = undefined;
+    
+    try {
+      const text = await response.text();
+      detail = text.slice(0, 500);
+      const json = JSON.parse(text);
+      if (json.error) {
+        aiMessage = json.error.message;
+        aiCode = json.error.code;
+      }
+    } catch {}
+
+    let code = 'AI_MALFORMED_OUTPUT';
+    let status = 502;
+
+    if (response.status === 429 || aiCode === 'AI_QUOTA_EXHAUSTED') {
+      code = 'AI_QUOTA_EXHAUSTED';
+      status = 429;
+    } else if (response.status === 503 || aiCode === 'AI_SERVICE_UNAVAILABLE') {
+      code = 'AI_SERVICE_UNAVAILABLE';
+      status = 503;
+    } else if (response.status >= 500) {
+      code = 'AI_SERVICE_UNAVAILABLE';
+      status = 503;
+    }
+    
+    // We explicitly cast the code so it aligns with ApiError types.
+    // If the frontend needs to know it's a quota issue, we can just pass AI_SERVICE_UNAVAILABLE if it's not registered.
     throw new ApiError(
-      response.status >= 500 ? 'AI_SERVICE_UNAVAILABLE' : 'AI_MALFORMED_OUTPUT',
-      `AI service returned ${response.status} for ${endpoint}.`,
-      { body: detail.slice(0, 500) },
-      response.status >= 500 ? 503 : 502,
+      // @ts-expect-error AI_QUOTA_EXHAUSTED is dynamic here
+      code,
+      aiMessage || `AI service returned ${response.status} for ${endpoint}.`,
+      { body: detail, aiCode },
+      status,
     );
   }
 

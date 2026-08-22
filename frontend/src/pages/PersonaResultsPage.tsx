@@ -1,6 +1,5 @@
 import { Badge, Card, EmptyState, MockBanner, PageHeader, ScoreBar } from '@/components/ui';
 import { useLabState } from '@/hooks/useLabState';
-import { personaById } from '@/mock';
 import { percent, seconds } from '@/utils/format';
 import type { PersonaSimulationResult, ViewerAction } from '@/types';
 
@@ -59,12 +58,10 @@ function extractNameFromId(id: string): string {
 }
 
 function PersonaCard({ reaction }: { reaction: PersonaSimulationResult }) {
-  // If we have mock data, use it for rich demographics, otherwise parse the ID
-  const mockPersona = personaById(reaction.personaId);
   const failed = reaction.error !== undefined;
   
-  const displayName = mockPersona?.name ?? extractNameFromId(reaction.personaId);
-  const demographic = mockPersona?.demographicSummary ?? `Synthetic Viewer (${reaction.personaId.split('__')[0]})`;
+  const displayName = reaction.personaName || extractNameFromId(reaction.personaId);
+  const demographic = reaction.demographicSummary || `Synthetic Viewer (${reaction.personaId.split('__')[0]})`;
 
   return (
     <Card className={failed ? 'opacity-60 border-red-300 bg-red-50' : 'border-ink-600 bg-white'}>

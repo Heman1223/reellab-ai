@@ -20,6 +20,9 @@ import type { Resolved } from './fallback';
  */
 
 export function registerUpload(file: Express.Multer.File): Reel {
+  console.log(`[VIDEO] upload received`);
+  console.log(`[VIDEO] file size: ${file.size} bytes`);
+  
   const reel: Reel = {
     id: `reel_${randomUUID().slice(0, 8)}`,
     filename: file.originalname,
@@ -73,6 +76,7 @@ export async function analyzeReel(
   }
 
   try {
+    console.log(`[VIDEO] video analysis started`);
     const resolved = await withFixtureFallback<ContentDNA>(
       'video.analyze',
       () => aiClient.post<ContentDNA>(AI_ENDPOINTS.videoAnalyze, { videoPath }, { requestId }),

@@ -117,9 +117,20 @@ async def _simulate_one(
 ) -> tuple[PersonaSimulationResult, bool]:
     """Simulate one persona, converting any failure into a flagged result."""
     async with semaphore:
+        print(f"[PERSONA] id: {persona.id}")
+        print(f"[PERSONA] model request started for {persona.id}")
         try:
-            return await simulate_persona(persona, content)
+            res = await simulate_persona(persona, content)
+            print(f"[PERSONA] model response received for {persona.id}")
+            print(f"[PERSONA] validation passed for {persona.id}")
+            print(f"[PERSONA] simulation completed for {persona.id}")
+            return res
         except Exception as exc:  # noqa: BLE001 — one persona must not kill the run
+            print(f"[PERSONA ERROR]")
+            print(f"persona_id: {persona.id}")
+            print(f"error: {str(exc)[:300]}")
+            print(f"raw response type: {type(exc)}")
+            print(f"validation error: True")
             log_event(
                 logger,
                 "persona_simulation_failed",
@@ -450,7 +461,7 @@ async def run_simulation(
     any segment, which the router turns into a 422. Every lesser failure comes
     back inside the result.
     """
-    options = SimulationOptions(depth=request.depth, seed=None)
+    options = SimulationOptions(depth=request.depth, personas_per_segment=request.personas_per_segment, seed=None)
 
     content_dna = content or request.content_dna
     audience_graph = graph or fixtures.audience_graph()
