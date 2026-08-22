@@ -186,7 +186,7 @@ class MediaAttachment:
             return None
 
         media_type = mimetypes.guess_type(file_path.name)[0] or ""
-        if not media_type.startswith("image/"):
+        if not (media_type.startswith("image/") or media_type.startswith("audio/")):
             return None
 
         return cls(

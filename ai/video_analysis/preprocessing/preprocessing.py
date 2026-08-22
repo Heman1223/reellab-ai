@@ -122,7 +122,7 @@ def _run_subprocess(cmd: list[str], error_message: str) -> subprocess.CompletedP
         raise UnsupportedVideoError(f"{error_message}: {str(exc)}") from exc
 
 
-def extract_media(video_path: str | Path, max_frames: int = 10) -> ExtractedMedia:
+def extract_media(video_path: str | Path, max_frames: int = 5) -> ExtractedMedia:
     """Pull frames and the audio track out of a reel."""
     is_url = str(video_path).startswith("http://") or str(video_path).startswith("https://")
     
@@ -203,11 +203,11 @@ def extract_media(video_path: str | Path, max_frames: int = 10) -> ExtractedMedi
 
         audio_path = None
         if has_audio:
-            out_audio = temp_path / "audio.wav"
+            out_audio = temp_path / "audio.mp3"
             cmd_audio = [
                 "ffmpeg", "-y", "-v", "error",
                 "-i", str(path),
-                "-vn", "-ac", "1", "-ar", "16000",
+                "-vn", "-ac", "1", "-ar", "16000", "-b:a", "32k",
                 str(out_audio)
             ]
             _run_subprocess(cmd_audio, "Failed to extract audio track")

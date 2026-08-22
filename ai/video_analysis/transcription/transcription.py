@@ -76,7 +76,7 @@ def transcribe(audio_path: str | Path | None) -> Transcript:
         model = _get_model()
         if model is None:
             return Transcript(text="")
-        segments_generator, info = model.transcribe(str(path), beam_size=5)
+        segments_generator, info = model.transcribe(str(path), beam_size=1)
         
         segments = []
         texts = []

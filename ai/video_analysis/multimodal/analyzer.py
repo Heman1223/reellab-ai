@@ -36,37 +36,40 @@ from video_analysis.preprocessing.preprocessing import extract_media
 from video_analysis.transcription.transcription import transcribe, Transcript
 from errors import TranscriptionFailedError, MalformedModelOutputError
 
-def _build_prompt(transcript: str, duration_seconds: float) -> str:
+def _build_prompt(duration_seconds: float) -> str:
     return f"""You are analysing a short-form vertical video for a creator tool.
 
 Duration: {duration_seconds:.1f}s
-Transcript: {transcript or "(no speech detected)"}
 
-The attached frames are sampled in chronological order across the video. Use this sequence and the transcript to understand scene progression. Do not fabricate precision beyond what the available sampled timestamps support.
+The attached audio is the extracted track. Transcribe it verbatim and write it to the 'transcript' field.
+The attached frames are sampled in chronological order across the video. Use this sequence and the audio to understand scene progression. Do not fabricate precision beyond what the available sampled timestamps support.
 
 Describe this reel as structured data. Follow these strict rules:
 
-1. Topic, Tone, & Emotion: Infer these holistically from the transcript and visual cues.
-2. The Hook: Focus on the first {HOOK_WINDOW_SECONDS:.0f} seconds (early frames + start of transcript).
+1. Transcript: Transcribe the audio track as accurately as possible into the 'transcript' field.
+2. Topic, Tone, & Emotion: Infer these holistically from the audio and visual cues.
+3. The Hook: Focus on the first {HOOK_WINDOW_SECONDS:.0f} seconds (early frames + start of audio).
    - Determine what the attention mechanism is.
    - Set 'type' to a clear category (e.g. "question", "statement", "visual_surprise", "negative_hook", "story_start").
    - Set 'strength' (0-1). Be harsh if the hook just states a category without stakes.
-3. Scenes: Identify meaningful scene boundaries.
+4. Scenes: Identify meaningful scene boundaries.
    - Start and end times must be chronological, within 0 and {duration_seconds:.1f}.
-   - Connect descriptions to the transcript where possible.
+   - Connect descriptions to the audio where possible.
    - Do not hallucinate timestamps.
-4. Visual Features:
+5. Visual Features:
    - Estimate cuts per second.
    - Note if there is readable on-screen text.
    - Estimate the proportion of runtime showing a human face (0-1).
-5. The CTA (Call to Action): Use the tail of the transcript and final frames.
+6. The CTA (Call to Action): Use the tail of the audio and final frames.
    - explicit CTA: directly asking for something.
    - implicit CTA: hinting or directing without a direct ask.
    - no CTA: 'present' is false.
    - If present, 'type' MUST be one of: "follow", "comment", "share", "save", "link", "other".
-6. Audio Features:
+7. Audio Features:
    - Note whether music is present. Rate the energy (0-1).
-   - (Speech presence and WPM are computed deterministically and will override your output, but provide sensible defaults).
+   - Note whether speech is present.
+   - For language, output the ISO 639-1 code if detected, else null.
+   - words_per_minute can be 0.0 for now, we will compute it.
 
 Describe what is there. Do not rate the video or predict its performance.
 Return JSON matching the ContentDNA schema."""
@@ -74,25 +77,24 @@ Return JSON matching the ContentDNA schema."""
 
 async def _analyze_with_model(video_path: str, video_id: str) -> ContentDNA:
     with extract_media(video_path) as media:
-        try:
-            transcript = transcribe(media.audio_path)
-        except TranscriptionFailedError as e:
-            logger.warning("Transcription failed, continuing with visual analysis only. Error: %s", str(e))
-            transcript = Transcript(text="")
-            
         print("[VIDEO] provider: gemini")
-        # In llm.py, tier="multimodal" is used, so the model is settings.multimodal_model
         from config import settings
         print(f"[VIDEO] model: {settings.multimodal_model}")
         print("[VIDEO] Gemini request started")
         
         from llm import MediaAttachment
-        attachment = MediaAttachment.from_path(str(media.frame_paths[0].parent))
-        attachments = [attachment] if attachment else []
+        attachments = []
+        for path in media.frame_paths:
+            att = MediaAttachment.from_path(str(path))
+            if att: attachments.append(att)
+            
+        if media.audio_path:
+            att = MediaAttachment.from_path(str(media.audio_path))
+            if att: attachments.append(att)
         
         dna, metadata = await llm.complete_model(
             ContentDNA,
-            prompt=_build_prompt(transcript=transcript.text, duration_seconds=media.duration_seconds),
+            prompt=_build_prompt(duration_seconds=media.duration_seconds),
             prompt_version=PROMPT_VERSION,
             tier="multimodal",
             media=attachments,
@@ -100,19 +102,18 @@ async def _analyze_with_model(video_path: str, video_id: str) -> ContentDNA:
         print("[VIDEO] Gemini response received")
         
         try:
-            # Re-populate the deterministic fields the LLM didn't (or shouldn't) guess
+            # Re-populate the deterministic fields
             dna.duration_seconds = media.duration_seconds
-            dna.transcript = transcript.text
             dna.video_id = video_id
             
             if not dna.audio_features:
                 from schemas.content import AudioFeatures
                 dna.audio_features = AudioFeatures(has_speech=False, has_music=False, words_per_minute=0.0, energy=0.0)
             
-            dna.audio_features.has_speech = not transcript.is_empty
-            dna.audio_features.words_per_minute = transcript.words_per_minute
-            if transcript.language:
-                dna.audio_features.language = transcript.language
+            if dna.transcript:
+                word_count = len(dna.transcript.split())
+                mins = media.duration_seconds / 60.0
+                dna.audio_features.words_per_minute = word_count / mins if mins > 0 else 0.0
                 
             for scene in dna.scenes:
                 scene.end_seconds = max(0.0, min(scene.end_seconds, media.duration_seconds))
