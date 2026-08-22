@@ -59,7 +59,8 @@ export async function analyzeReel(
     // On Render, the backend and AI service do not share a disk. We must pass
     // an HTTP URL so the AI service can download it from us.
     if (process.env.RENDER_EXTERNAL_URL) {
-      videoPath = `${process.env.RENDER_EXTERNAL_URL}/${reel.storagePath}`;
+      const filename = path.basename(reel.storagePath);
+      videoPath = `${process.env.RENDER_EXTERNAL_URL}/uploads/${filename}`;
     } else {
       videoPath = path.resolve(reel.storagePath);
     }
