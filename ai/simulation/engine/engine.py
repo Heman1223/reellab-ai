@@ -473,13 +473,12 @@ async def run_simulation(
     personas: list[Persona] = []
     generation_warnings: list[Warning] = []
 
-    for segment in segments:
+    async def _generate_for_segment(segment):
         try:
             generated, mock = await generate_personas(
                 segment, per_segment, audience_graph.request.creator_goal
             )
-            any_mock = any_mock or mock
-            personas.extend(generated)
+            return generated, mock, None
         except Exception as exc:  # noqa: BLE001 — one bad segment is not a failed run
             log_event(
                 logger,
@@ -487,17 +486,29 @@ async def run_simulation(
                 segment_id=segment.id,
                 error=str(exc)[:300],
             )
-            generation_warnings.append(
-                Warning(
-                    code="PERSONA_GENERATION_FAILED",
-                    message=f"Could not generate personas for '{segment.name}': {exc}",
-                    severity="warning",
-                )
+            return [], False, Warning(
+                code="PERSONA_GENERATION_FAILED",
+                message=f"Could not generate personas for '{segment.name}': {exc}",
+                severity="warning",
             )
 
+    results = await asyncio.gather(*(_generate_for_segment(s) for s in segments))
+    for gen, mock, warn in results:
+        personas.extend(gen)
+        any_mock = any_mock or mock
+        if warn:
+            generation_warnings.append(warn)
+
     if not personas:
-        raise RuntimeError(
-            "No personas could be generated for any segment; there is nothing to simulate."
+        any_mock = True
+        for segment in segments:
+            personas.extend(fixtures.personas_for_segment(segment.id, per_segment))
+        generation_warnings.append(
+            Warning(
+                code="BENCHMARK_PERSONAS_USED",
+                message="AI persona generation timed out or failed; simulated using calibrated benchmark personas.",
+                severity="info",
+            )
         )
 
     result, mock = await run_simulation_for_personas(
