@@ -50,6 +50,7 @@ class Settings:
     log_level: str = os.getenv("AI_LOG_LEVEL", "info")
 
     provider: str = os.getenv("AI_PROVIDER", "mock")
+    multimodal_provider: str = os.getenv("MULTIMODAL_PROVIDER", os.getenv("AI_PROVIDER", "mock"))
     api_key: str = os.getenv("AI_API_KEY", "")
     multimodal_model: str = os.getenv("MULTIMODAL_MODEL", "claude-sonnet-5")
     reasoning_model: str = os.getenv("REASONING_MODEL", "claude-opus-5")
@@ -61,13 +62,19 @@ class Settings:
     max_personas: int = _int("AI_MAX_PERSONAS", 25)
     request_timeout_seconds: int = _int("AI_REQUEST_TIMEOUT_SECONDS", 120)
 
+    def is_configured_for(self, tier: str) -> bool:
+        """True if the provider for the specified tier has credentials."""
+        provider_name = self.multimodal_provider if tier == "multimodal" else self.provider
+        if provider_name == "mock":
+            return False
+        if provider_name == "huggingface":
+            return self.hf_token.strip() != ""
+        return self.api_key.strip() != ""
+
     @property
     def is_mock_mode(self) -> bool:
-        """True when no model will be called and fixtures are served instead."""
-        # For Hugging Face, check if hf_token is available when provider is huggingface
-        if self.provider == "huggingface":
-            return self.hf_token.strip() == ""
-        return self.provider == "mock" or self.api_key.strip() == ""
+        """True when the main reasoning provider is unconfigured."""
+        return not self.is_configured_for("reasoning")
 
 
 settings = Settings()
