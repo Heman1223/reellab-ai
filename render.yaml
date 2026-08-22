@@ -57,6 +57,8 @@ services:
     envVars:
       - key: NODE_VERSION
         value: "20"
+      - key: VITE_USE_MOCKS
+        value: "false"
       - key: BACKEND_URL
         fromService:
           type: web
