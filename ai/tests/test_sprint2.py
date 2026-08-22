@@ -1,3 +1,5 @@
+from config import settings
+import dataclasses
 import pytest  # type: ignore
 import asyncio
 from pathlib import Path
@@ -51,8 +53,9 @@ def dummy_content():
 
 @pytest.mark.asyncio
 async def test_analyzer_deterministic_overrides(mock_dummy_media, monkeypatch):
-    monkeypatch.setattr("config.settings.provider", "anthropic")
-    monkeypatch.setattr("config.settings.api_key", "test")
+    mock_settings = dataclasses.replace(settings, persona_provider='openai', openai_api_key='test', video_provider='gemini', gemini_api_key='test')
+    monkeypatch.setattr('config.settings', mock_settings)
+    monkeypatch.setattr('llm.settings', mock_settings)
     
     async def mock_complete(*args, **kwargs):
         return MockLLMResult({
@@ -91,8 +94,9 @@ async def test_analyzer_deterministic_overrides(mock_dummy_media, monkeypatch):
 
 @pytest.mark.asyncio
 async def test_analyzer_invalid_hook_type(mock_dummy_media, monkeypatch):
-    monkeypatch.setattr("config.settings.provider", "anthropic")
-    monkeypatch.setattr("config.settings.api_key", "test")
+    mock_settings = dataclasses.replace(settings, persona_provider='openai', openai_api_key='test', video_provider='gemini', gemini_api_key='test')
+    monkeypatch.setattr('config.settings', mock_settings)
+    monkeypatch.setattr('llm.settings', mock_settings)
     
     async def mock_complete(*args, **kwargs):
         return MockLLMResult({
@@ -108,8 +112,9 @@ async def test_analyzer_invalid_hook_type(mock_dummy_media, monkeypatch):
 
 @pytest.mark.asyncio
 async def test_counterfactual_modification_lever(monkeypatch, dummy_content, dummy_sim):
-    monkeypatch.setattr("config.settings.provider", "anthropic")
-    monkeypatch.setattr("config.settings.api_key", "test")
+    mock_settings = dataclasses.replace(settings, persona_provider='openai', openai_api_key='test', video_provider='gemini', gemini_api_key='test')
+    monkeypatch.setattr('config.settings', mock_settings)
+    monkeypatch.setattr('llm.settings', mock_settings)
     
     prompt_captured = ""
     async def mock_complete(prompt, *args, **kwargs):
@@ -130,8 +135,9 @@ async def test_counterfactual_modification_lever(monkeypatch, dummy_content, dum
 
 @pytest.mark.asyncio
 async def test_counterfactual_count_enforcement(monkeypatch, dummy_content, dummy_sim):
-    monkeypatch.setattr("config.settings.provider", "anthropic")
-    monkeypatch.setattr("config.settings.api_key", "test")
+    mock_settings = dataclasses.replace(settings, persona_provider='openai', openai_api_key='test', video_provider='gemini', gemini_api_key='test')
+    monkeypatch.setattr('config.settings', mock_settings)
+    monkeypatch.setattr('llm.settings', mock_settings)
     
     async def mock_complete(*args, **kwargs):
         return MockLLMResult([
@@ -152,10 +158,11 @@ async def test_counterfactual_count_enforcement(monkeypatch, dummy_content, dumm
 
 @pytest.mark.asyncio
 async def test_llm_timeout_mapping(monkeypatch):
-    monkeypatch.setattr("config.settings.provider", "anthropic")
-    monkeypatch.setattr("config.settings.api_key", "test")
+    mock_settings = dataclasses.replace(settings, persona_provider='openai', openai_api_key='test', video_provider='gemini', gemini_api_key='test')
+    monkeypatch.setattr('config.settings', mock_settings)
+    monkeypatch.setattr('llm.settings', mock_settings)
     
-    class MockAnthropic:
+    class MockOpenAI:
         class APITimeoutError(Exception): pass
         
         class MockClient:
@@ -164,12 +171,12 @@ async def test_llm_timeout_mapping(monkeypatch):
             def messages(self):
                 class Msg:
                     async def create(self, *args, **kwargs):
-                        raise MockAnthropic.APITimeoutError("timeout")
+                        raise MockOpenAI.APITimeoutError("timeout")
                 return Msg()
                 
-        AsyncAnthropic = MockClient
+        AsyncClient = MockClient
         
-    monkeypatch.setattr("llm.anthropic", MockAnthropic)
+    monkeypatch.setattr("llm.httpx", MockOpenAI)
     client = LLMClient()
     
     with pytest.raises(ModelTimeoutError):

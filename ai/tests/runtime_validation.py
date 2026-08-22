@@ -45,7 +45,7 @@ async def main(video_path: str):
 
     # Delay import of project modules until after dependencies are verified
     from config import settings
-    from llm import llm, GeminiProvider, HuggingFaceProvider
+    from llm import llm, GeminiProvider
     from video_analysis.preprocessing.preprocessing import extract_media
     from video_analysis.transcription.transcription import transcribe
     from video_analysis.multimodal.analyzer import analyze_video
@@ -73,7 +73,7 @@ async def main(video_path: str):
         print(f"[FAIL] Reasoning provider is not Gemini, it is {type(reasoning_provider).__name__}")
         sys.exit(1)
         
-    if isinstance(multimodal_provider, HuggingFaceProvider):
+    if False:
         print("[PASS] Multimodal provider: Hugging Face")
     else:
         print(f"[FAIL] Multimodal provider is not Hugging Face, it is {type(multimodal_provider).__name__}")

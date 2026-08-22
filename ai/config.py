@@ -49,6 +49,16 @@ class Settings:
     port: int = _int("AI_PORT", 8000)
     log_level: str = os.getenv("AI_LOG_LEVEL", "info")
 
+    # Target architecture
+    persona_provider: str = os.getenv("PERSONA_PROVIDER", "openai")
+    persona_model: str = os.getenv("PERSONA_MODEL", "gpt-4o")
+    openai_api_key: str = os.getenv("OPENAI_API_KEY", "")
+
+    video_provider: str = os.getenv("VIDEO_PROVIDER", "gemini")
+    video_model: str = os.getenv("VIDEO_MODEL", "gemini-3.1-pro")
+    gemini_api_key: str = os.getenv("GEMINI_API_KEY", "")
+
+    # Legacy variables (retained for backward compatibility)
     provider: str = os.getenv("AI_PROVIDER", "mock")
     multimodal_provider: str = os.getenv("MULTIMODAL_PROVIDER", os.getenv("AI_PROVIDER", "mock"))
     api_key: str = os.getenv("AI_API_KEY", "")
@@ -64,12 +74,10 @@ class Settings:
 
     def is_configured_for(self, tier: str) -> bool:
         """True if the provider for the specified tier has credentials."""
-        provider_name = self.multimodal_provider if tier == "multimodal" else self.provider
-        if provider_name == "mock":
-            return False
-        if provider_name == "huggingface":
-            return self.hf_token.strip() != ""
-        return self.api_key.strip() != ""
+        if tier == "multimodal":
+            return self.video_provider != "mock" and self.gemini_api_key.strip() != ""
+        else:
+            return self.persona_provider != "mock" and self.openai_api_key.strip() != ""
 
     @property
     def is_mock_mode(self) -> bool:

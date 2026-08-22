@@ -12,12 +12,13 @@ python-multipart>=0.0.12
 
 # Testing
 pytest>=8.3,<9.0
+pytest-asyncio>=0.23,<1.0
 
 # ---------------------------------------------------------------------------
 # Not installed yet — uncomment when you actually need them.
 #
 # Model providers (Developer 1 and Developer 2, when wiring ai/llm.py):
-anthropic>=0.40
+
 #
 # Video and audio (Developer 2, when building ai/video_analysis/):
 #   FFmpeg itself is a system binary, not a pip package — install it separately

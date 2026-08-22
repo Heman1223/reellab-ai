@@ -1,3 +1,5 @@
+from config import settings
+import dataclasses
 import pytest  # type: ignore
 from pathlib import Path
 import tempfile
@@ -61,8 +63,9 @@ def mock_pipeline(monkeypatch):
 @pytest.mark.asyncio
 async def test_analyzer_success(mock_pipeline, monkeypatch):
     # Ensure not mock mode so it actually calls _analyze_with_model
-    monkeypatch.setattr("config.settings.provider", "anthropic")
-    monkeypatch.setattr("config.settings.api_key", "test")
+    mock_settings = dataclasses.replace(settings, persona_provider='openai', openai_api_key='test', video_provider='gemini', gemini_api_key='test')
+    monkeypatch.setattr('config.settings', mock_settings)
+    monkeypatch.setattr('llm.settings', mock_settings)
     
     dna, mock = await analyze_video("test.mp4", "vid1")
     assert mock is False
@@ -72,8 +75,9 @@ async def test_analyzer_success(mock_pipeline, monkeypatch):
 
 @pytest.mark.asyncio
 async def test_transcription_failure_continues(mock_pipeline, monkeypatch):
-    monkeypatch.setattr("config.settings.provider", "anthropic")
-    monkeypatch.setattr("config.settings.api_key", "test")
+    mock_settings = dataclasses.replace(settings, persona_provider='openai', openai_api_key='test', video_provider='gemini', gemini_api_key='test')
+    monkeypatch.setattr('config.settings', mock_settings)
+    monkeypatch.setattr('llm.settings', mock_settings)
     
     def failing_transcribe(x):
         raise TranscriptionFailedError("Mock failure")
@@ -90,8 +94,9 @@ async def test_transcription_failure_continues(mock_pipeline, monkeypatch):
 
 @pytest.mark.asyncio
 async def test_malformed_output_raises(mock_pipeline, monkeypatch):
-    monkeypatch.setattr("config.settings.provider", "anthropic")
-    monkeypatch.setattr("config.settings.api_key", "test")
+    mock_settings = dataclasses.replace(settings, persona_provider='openai', openai_api_key='test', video_provider='gemini', gemini_api_key='test')
+    monkeypatch.setattr('config.settings', mock_settings)
+    monkeypatch.setattr('llm.settings', mock_settings)
     
     class MockLLMResult:
         def __init__(self, data):

@@ -1,3 +1,5 @@
+from config import settings
+import dataclasses
 import pytest  # type: ignore
 import base64
 from pathlib import Path
@@ -43,17 +45,18 @@ class MockClient:
 
 
 @pytest.fixture
-def mock_anthropic(monkeypatch):
-    class MockAnthropicModule:
-        AsyncAnthropic = MockClient
+def mock_openai(monkeypatch):
+    class MockOpenAIModule:
+        AsyncClient = MockClient
     
-    monkeypatch.setattr("llm.anthropic", MockAnthropicModule)
+    monkeypatch.setattr("llm.httpx", MockOpenAIModule)
 
 
 @pytest.mark.asyncio
 async def test_unconfigured(monkeypatch):
-    monkeypatch.setattr("config.settings.provider", "mock")
-    monkeypatch.setattr("config.settings.api_key", "")
+    mock_settings = dataclasses.replace(settings, persona_provider='openai', openai_api_key='test', video_provider='gemini', gemini_api_key='test')
+    monkeypatch.setattr('config.settings', mock_settings)
+    monkeypatch.setattr('llm.settings', mock_settings)
     
     client = LLMClient()
     with pytest.raises(AINotConfiguredError):
@@ -61,9 +64,10 @@ async def test_unconfigured(monkeypatch):
 
 
 @pytest.mark.asyncio
-async def test_text_only_reasoning(mock_anthropic, monkeypatch):
-    monkeypatch.setattr("config.settings.provider", "anthropic")
-    monkeypatch.setattr("config.settings.api_key", "test_key")
+async def test_text_only_reasoning(mock_openai, monkeypatch):
+    mock_settings = dataclasses.replace(settings, persona_provider='openai', openai_api_key='test', video_provider='gemini', gemini_api_key='test')
+    monkeypatch.setattr('config.settings', mock_settings)
+    monkeypatch.setattr('llm.settings', mock_settings)
     
     client = LLMClient()
     result = await client.complete_json(
@@ -78,9 +82,10 @@ async def test_text_only_reasoning(mock_anthropic, monkeypatch):
 
 
 @pytest.mark.asyncio
-async def test_multimodal_frames(mock_anthropic, monkeypatch):
-    monkeypatch.setattr("config.settings.provider", "anthropic")
-    monkeypatch.setattr("config.settings.api_key", "test_key")
+async def test_multimodal_frames(mock_openai, monkeypatch):
+    mock_settings = dataclasses.replace(settings, persona_provider='openai', openai_api_key='test', video_provider='gemini', gemini_api_key='test')
+    monkeypatch.setattr('config.settings', mock_settings)
+    monkeypatch.setattr('llm.settings', mock_settings)
     
     client = LLMClient()
     
@@ -102,9 +107,10 @@ async def test_multimodal_frames(mock_anthropic, monkeypatch):
         assert result.data == {"success": True}
 
 @pytest.mark.asyncio
-async def test_malformed_output(mock_anthropic, monkeypatch):
-    monkeypatch.setattr("config.settings.provider", "anthropic")
-    monkeypatch.setattr("config.settings.api_key", "test_key")
+async def test_malformed_output(mock_openai, monkeypatch):
+    mock_settings = dataclasses.replace(settings, persona_provider='openai', openai_api_key='test', video_provider='gemini', gemini_api_key='test')
+    monkeypatch.setattr('config.settings', mock_settings)
+    monkeypatch.setattr('llm.settings', mock_settings)
     
     client = LLMClient()
     
@@ -117,5 +123,5 @@ async def test_malformed_output(mock_anthropic, monkeypatch):
     with pytest.raises(MalformedModelOutputError):
         await client.complete_json(prompt="NON_DICT_RESPONSE", prompt_version="v1")
         
-    with pytest.raises(ReelLabAIError, match="Anthropic API call failed"):
+    with pytest.raises(ReelLabAIError, match="OpenAI API call failed"):
         await client.complete_json(prompt="FAIL_API", prompt_version="v1")

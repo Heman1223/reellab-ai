@@ -1,3 +1,5 @@
+from config import settings
+import dataclasses
 import pytest  # type: ignore
 import asyncio
 from pathlib import Path
@@ -53,8 +55,9 @@ def dummy_content():
 # CASE 1: Valid video + AI unavailable
 @pytest.mark.asyncio
 async def test_case_1_ai_unavailable(mock_dummy_media, monkeypatch):
-    monkeypatch.setattr("config.settings.provider", "")
-    monkeypatch.setattr("config.settings.api_key", "")
+    mock_settings = dataclasses.replace(settings, persona_provider='openai', openai_api_key='test', video_provider='gemini', gemini_api_key='test')
+    monkeypatch.setattr('config.settings', mock_settings)
+    monkeypatch.setattr('llm.settings', mock_settings)
     
     dna, mock = await analyze_video("fake.mp4", "vid1")
     assert mock is True
@@ -64,8 +67,9 @@ async def test_case_1_ai_unavailable(mock_dummy_media, monkeypatch):
 # CASE 2: Valid video + no audio
 @pytest.mark.asyncio
 async def test_case_2_no_audio(mock_dummy_media, monkeypatch):
-    monkeypatch.setattr("config.settings.provider", "anthropic")
-    monkeypatch.setattr("config.settings.api_key", "test")
+    mock_settings = dataclasses.replace(settings, persona_provider='openai', openai_api_key='test', video_provider='gemini', gemini_api_key='test')
+    monkeypatch.setattr('config.settings', mock_settings)
+    monkeypatch.setattr('llm.settings', mock_settings)
     
     class DummyMediaNoAudio:
         def __init__(self, td):
@@ -92,8 +96,9 @@ async def test_case_2_no_audio(mock_dummy_media, monkeypatch):
 # CASE 3: Valid video + transcription failure
 @pytest.mark.asyncio
 async def test_case_3_transcription_failure(mock_dummy_media, monkeypatch):
-    monkeypatch.setattr("config.settings.provider", "anthropic")
-    monkeypatch.setattr("config.settings.api_key", "test")
+    mock_settings = dataclasses.replace(settings, persona_provider='openai', openai_api_key='test', video_provider='gemini', gemini_api_key='test')
+    monkeypatch.setattr('config.settings', mock_settings)
+    monkeypatch.setattr('llm.settings', mock_settings)
     
     def mock_transcribe(*args, **kwargs):
         raise TranscriptionFailedError("mock crash")
@@ -113,8 +118,9 @@ async def test_case_3_transcription_failure(mock_dummy_media, monkeypatch):
 # CASE 4: Valid video + malformed LLM output
 @pytest.mark.asyncio
 async def test_case_4_malformed_llm(mock_dummy_media, monkeypatch):
-    monkeypatch.setattr("config.settings.provider", "anthropic")
-    monkeypatch.setattr("config.settings.api_key", "test")
+    mock_settings = dataclasses.replace(settings, persona_provider='openai', openai_api_key='test', video_provider='gemini', gemini_api_key='test')
+    monkeypatch.setattr('config.settings', mock_settings)
+    monkeypatch.setattr('llm.settings', mock_settings)
     
     async def mock_complete(*args, **kwargs):
         return MockLLMResult({"missing": "everything"})
@@ -127,8 +133,9 @@ async def test_case_4_malformed_llm(mock_dummy_media, monkeypatch):
 # CASE 5: Valid video + valid LLM output
 @pytest.mark.asyncio
 async def test_case_5_valid_llm(mock_dummy_media, monkeypatch):
-    monkeypatch.setattr("config.settings.provider", "anthropic")
-    monkeypatch.setattr("config.settings.api_key", "test")
+    mock_settings = dataclasses.replace(settings, persona_provider='openai', openai_api_key='test', video_provider='gemini', gemini_api_key='test')
+    monkeypatch.setattr('config.settings', mock_settings)
+    monkeypatch.setattr('llm.settings', mock_settings)
     
     async def mock_complete(*args, **kwargs):
         return MockLLMResult(fixtures.content_dna().model_dump())
@@ -142,8 +149,9 @@ async def test_case_5_valid_llm(mock_dummy_media, monkeypatch):
 # CASE 6: Counterfactual generation
 @pytest.mark.asyncio
 async def test_case_6_counterfactuals(monkeypatch, dummy_content, dummy_sim):
-    monkeypatch.setattr("config.settings.provider", "anthropic")
-    monkeypatch.setattr("config.settings.api_key", "test")
+    mock_settings = dataclasses.replace(settings, persona_provider='openai', openai_api_key='test', video_provider='gemini', gemini_api_key='test')
+    monkeypatch.setattr('config.settings', mock_settings)
+    monkeypatch.setattr('llm.settings', mock_settings)
     
     async def mock_complete(*args, **kwargs):
         # Unwrapped output
@@ -161,8 +169,9 @@ async def test_case_6_counterfactuals(monkeypatch, dummy_content, dummy_sim):
 # CASE 7: Counterfactual malformed output
 @pytest.mark.asyncio
 async def test_case_7_counterfactual_malformed(monkeypatch, dummy_content, dummy_sim):
-    monkeypatch.setattr("config.settings.provider", "anthropic")
-    monkeypatch.setattr("config.settings.api_key", "test")
+    mock_settings = dataclasses.replace(settings, persona_provider='openai', openai_api_key='test', video_provider='gemini', gemini_api_key='test')
+    monkeypatch.setattr('config.settings', mock_settings)
+    monkeypatch.setattr('llm.settings', mock_settings)
     
     async def mock_complete(*args, **kwargs):
         return MockLLMResult([{"bad": "variant"}])
@@ -175,12 +184,13 @@ async def test_case_7_counterfactual_malformed(monkeypatch, dummy_content, dummy
 # CASE 8: Reasoning LLM call backward compatibility
 @pytest.mark.asyncio
 async def test_case_8_reasoning_llm_call(monkeypatch):
-    monkeypatch.setattr("config.settings.provider", "anthropic")
-    monkeypatch.setattr("config.settings.api_key", "test")
+    mock_settings = dataclasses.replace(settings, persona_provider='openai', openai_api_key='test', video_provider='gemini', gemini_api_key='test')
+    monkeypatch.setattr('config.settings', mock_settings)
+    monkeypatch.setattr('llm.settings', mock_settings)
     
     # We mock the anthropic client to just verify the payload
     passed_kwargs = {}
-    class MockAnthropic:
+    class MockOpenAI:
         class Msg:
             async def create(self, **kwargs):
                 nonlocal passed_kwargs
@@ -202,11 +212,11 @@ async def test_case_8_reasoning_llm_call(monkeypatch):
         class MockClient:
             def __init__(self, *args, **kwargs): pass
             @property
-            def messages(self): return MockAnthropic.Msg()
+            def messages(self): return MockOpenAI.Msg()
             
-        AsyncAnthropic = MockClient
+        AsyncClient = MockClient
         
-    monkeypatch.setattr("llm.anthropic", MockAnthropic)
+    monkeypatch.setattr("llm.httpx", MockOpenAI)
     
     client = LLMClient()
     res = await client.complete_json(prompt="test", prompt_version="v", tier="reasoning")
@@ -220,11 +230,12 @@ async def test_case_8_reasoning_llm_call(monkeypatch):
 # CASE 9: Multimodal LLM call with frames
 @pytest.mark.asyncio
 async def test_case_9_multimodal_llm_call(monkeypatch):
-    monkeypatch.setattr("config.settings.provider", "anthropic")
-    monkeypatch.setattr("config.settings.api_key", "test")
+    mock_settings = dataclasses.replace(settings, persona_provider='openai', openai_api_key='test', video_provider='gemini', gemini_api_key='test')
+    monkeypatch.setattr('config.settings', mock_settings)
+    monkeypatch.setattr('llm.settings', mock_settings)
     
     passed_kwargs = {}
-    class MockAnthropic:
+    class MockOpenAI:
         class Msg:
             async def create(self, **kwargs):
                 nonlocal passed_kwargs
@@ -246,11 +257,11 @@ async def test_case_9_multimodal_llm_call(monkeypatch):
         class MockClient:
             def __init__(self, *args, **kwargs): pass
             @property
-            def messages(self): return MockAnthropic.Msg()
+            def messages(self): return MockOpenAI.Msg()
             
-        AsyncAnthropic = MockClient
+        AsyncClient = MockClient
         
-    monkeypatch.setattr("llm.anthropic", MockAnthropic)
+    monkeypatch.setattr("llm.httpx", MockOpenAI)
     
     client = LLMClient()
     

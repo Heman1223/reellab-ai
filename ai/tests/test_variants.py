@@ -1,3 +1,5 @@
+from config import settings
+import dataclasses
 import pytest  # type: ignore
 import asyncio
 from counterfactual.generation.variants import generate_variants
@@ -33,8 +35,9 @@ def dummy_inputs():
 
 @pytest.mark.asyncio
 async def test_variant_generation_count(mock_pipeline, monkeypatch, dummy_inputs):
-    monkeypatch.setattr("config.settings.provider", "anthropic")
-    monkeypatch.setattr("config.settings.api_key", "test")
+    mock_settings = dataclasses.replace(settings, persona_provider='openai', openai_api_key='test', video_provider='gemini', gemini_api_key='test')
+    monkeypatch.setattr('config.settings', mock_settings)
+    monkeypatch.setattr('llm.settings', mock_settings)
     
     content, sim = dummy_inputs
     variants, mock = await generate_variants(content, sim, modification_type="hook", count=2)
@@ -48,8 +51,9 @@ async def test_variant_generation_count(mock_pipeline, monkeypatch, dummy_inputs
 
 @pytest.mark.asyncio
 async def test_variant_zero_count(mock_pipeline, monkeypatch, dummy_inputs):
-    monkeypatch.setattr("config.settings.provider", "anthropic")
-    monkeypatch.setattr("config.settings.api_key", "test")
+    mock_settings = dataclasses.replace(settings, persona_provider='openai', openai_api_key='test', video_provider='gemini', gemini_api_key='test')
+    monkeypatch.setattr('config.settings', mock_settings)
+    monkeypatch.setattr('llm.settings', mock_settings)
     
     content, sim = dummy_inputs
     variants, mock = await generate_variants(content, sim, modification_type="hook", count=0)
@@ -60,8 +64,9 @@ async def test_variant_zero_count(mock_pipeline, monkeypatch, dummy_inputs):
 
 @pytest.mark.asyncio
 async def test_modification_type_prompt_injection(monkeypatch, dummy_inputs):
-    monkeypatch.setattr("config.settings.provider", "anthropic")
-    monkeypatch.setattr("config.settings.api_key", "test")
+    mock_settings = dataclasses.replace(settings, persona_provider='openai', openai_api_key='test', video_provider='gemini', gemini_api_key='test')
+    monkeypatch.setattr('config.settings', mock_settings)
+    monkeypatch.setattr('llm.settings', mock_settings)
     
     prompt_captured = None
     
@@ -83,8 +88,9 @@ async def test_modification_type_prompt_injection(monkeypatch, dummy_inputs):
 
 @pytest.mark.asyncio
 async def test_variant_malformed_output(monkeypatch, dummy_inputs):
-    monkeypatch.setattr("config.settings.provider", "anthropic")
-    monkeypatch.setattr("config.settings.api_key", "test")
+    mock_settings = dataclasses.replace(settings, persona_provider='openai', openai_api_key='test', video_provider='gemini', gemini_api_key='test')
+    monkeypatch.setattr('config.settings', mock_settings)
+    monkeypatch.setattr('llm.settings', mock_settings)
     
     async def bad_complete_json(*args, **kwargs):
         return MockLLMResult([{"label": "missing_fields"}])
@@ -102,8 +108,9 @@ async def test_variant_malformed_output(monkeypatch, dummy_inputs):
 @pytest.mark.asyncio
 async def test_variant_nested_variants_key(monkeypatch, dummy_inputs):
     # Test handling of {"variants": [...]} output shape
-    monkeypatch.setattr("config.settings.provider", "anthropic")
-    monkeypatch.setattr("config.settings.api_key", "test")
+    mock_settings = dataclasses.replace(settings, persona_provider='openai', openai_api_key='test', video_provider='gemini', gemini_api_key='test')
+    monkeypatch.setattr('config.settings', mock_settings)
+    monkeypatch.setattr('llm.settings', mock_settings)
     
     async def wrapped_complete_json(*args, **kwargs):
         return MockLLMResult({

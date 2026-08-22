@@ -1,3 +1,5 @@
+from config import settings
+import dataclasses
 import pytest  # type: ignore
 import asyncio
 from pathlib import Path
@@ -67,8 +69,9 @@ async def test_analyze_video_integration_no_media_mocks(mock_anthropic_multimoda
     Since we can't commit large video files, we mock extract_media just enough to provide a valid path,
     or use a tiny dummy if available.
     """
-    monkeypatch.setattr("config.settings.provider", "anthropic")
-    monkeypatch.setattr("config.settings.api_key", "test")
+    mock_settings = dataclasses.replace(settings, persona_provider='openai', openai_api_key='test', video_provider='gemini', gemini_api_key='test')
+    monkeypatch.setattr('config.settings', mock_settings)
+    monkeypatch.setattr('llm.settings', mock_settings)
     
     # We will mock extract_media to return a mocked ExtractedMedia
     # because creating a real video via FFmpeg in a test requires FFmpeg to be installed.

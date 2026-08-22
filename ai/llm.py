@@ -244,90 +244,6 @@ def _parse_json(text: str) -> Any:
         ) from exc
 
 
-class AnthropicProvider:
-    """Anthropic Messages API.
-
-    Structured output is forced through a single-tool `tool_choice` rather than
-    asked for in the prompt. Asking nicely produces prose about JSON often
-    enough to matter when you are making one call per persona.
-    """
-
-    name = "anthropic"
-    endpoint = "https://api.anthropic.com/v1/messages"
-    version = "2023-06-01"
-
-    def __init__(self, api_key: str) -> None:
-        self._api_key = api_key
-
-    async def generate_structured(
-        self,
-        *,
-        prompt: str,
-        system: str,
-        schema: dict[str, Any],
-        model: str,
-        max_tokens: int,
-        timeout: float,
-        media: list[MediaAttachment],
-    ) -> ProviderResponse:
-        content: list[dict[str, Any]] = [
-            {
-                "type": "image",
-                "source": {
-                    "type": "base64",
-                    "media_type": item.media_type,
-                    "data": item.data_b64,
-                },
-            }
-            for item in media
-        ]
-        content.append({"type": "text", "text": prompt})
-
-        payload = {
-            "model": model,
-            "max_tokens": max_tokens,
-            "system": system,
-            "messages": [{"role": "user", "content": content}],
-            "tools": [
-                {
-                    "name": "emit_result",
-                    "description": "Return the result as structured data.",
-                    "input_schema": schema,
-                }
-            ],
-            "tool_choice": {"type": "tool", "name": "emit_result"},
-        }
-
-        async with httpx.AsyncClient(timeout=timeout) as client:
-            response = await client.post(
-                self.endpoint,
-                headers={
-                    "x-api-key": self._api_key,
-                    "anthropic-version": self.version,
-                    "content-type": "application/json",
-                },
-                json=payload,
-            )
-
-        _raise_for_status(response, self.name)
-        body = response.json()
-
-        for block in body.get("content", []):
-            if block.get("type") == "tool_use":
-                usage = body.get("usage", {})
-                return ProviderResponse(
-                    data=block.get("input"),
-                    model=body.get("model", model),
-                    input_tokens=usage.get("input_tokens"),
-                    output_tokens=usage.get("output_tokens"),
-                )
-
-        raise MalformedModelOutputError(
-            "Anthropic returned no tool_use block.",
-            details={"stop_reason": body.get("stop_reason")},
-        )
-
-
 class OpenAIProvider:
     """OpenAI Chat Completions with a strict JSON schema response format."""
 
@@ -611,87 +527,9 @@ def _raise_for_status(response: httpx.Response, provider: str) -> None:
     )
 
 
-class HuggingFaceProvider:
-    """HuggingFace Inference API via the Chat Completions endpoint.
-
-    Supports multimodal inputs (image frames) by base64-encoding JPEG files
-    from a directory path. The model is expected to return raw JSON.
-    """
-
-    name = "huggingface"
-
-    def __init__(self, api_key: str) -> None:
-        # api_key is the HF_TOKEN for HuggingFace
-        self._api_key = api_key
-
-    async def generate_structured(
-        self,
-        *,
-        prompt: str,
-        system: str,
-        schema: dict[str, Any],
-        model: str,
-        max_tokens: int,
-        timeout: float,
-        media: list[MediaAttachment],
-    ) -> ProviderResponse:
-        content: list[dict[str, Any]] = []
-        for item in media:
-            content.append(
-                {
-                    "type": "image_url",
-                    "image_url": {"url": f"data:{item.media_type};base64,{item.data_b64}"},
-                }
-            )
-        content.append(
-            {
-                "type": "text",
-                "text": prompt + "\n\nRespond ONLY with raw JSON containing the required output.",
-            }
-        )
-
-        payload = {
-            "model": model,
-            "messages": [{"role": "user", "content": content}],
-            "max_tokens": max_tokens,
-            "stream": False,
-        }
-
-        url = f"https://api-inference.huggingface.co/models/{model}/v1/chat/completions"
-
-        async with httpx.AsyncClient(timeout=timeout) as client:
-            response = await client.post(
-                url,
-                headers={
-                    "Authorization": f"Bearer {self._api_key}",
-                    "Content-Type": "application/json",
-                },
-                json=payload,
-            )
-
-        _raise_for_status(response, self.name)
-        body = response.json()
-
-        try:
-            raw_text = body["choices"][0]["message"]["content"]
-        except (KeyError, IndexError) as exc:
-            raise MalformedModelOutputError("HuggingFace returned no message content.") from exc
-
-        usage = body.get("usage", {})
-        return ProviderResponse(
-            data=_parse_json(raw_text),
-            model=model,
-            input_tokens=usage.get("prompt_tokens"),
-            output_tokens=usage.get("completion_tokens"),
-            raw_text=raw_text,
-        )
-
-
 PROVIDERS: dict[str, Callable[[str], ModelProvider]] = {
-    "anthropic": AnthropicProvider,
     "openai": OpenAIProvider,
     "gemini": GeminiProvider,
-    "huggingface": HuggingFaceProvider,
 }
 
 
@@ -752,29 +590,32 @@ class LLMClient:
     # -- configuration ----------------------------------------------------
 
     def is_configured(self, tier: str = "reasoning") -> bool:
-        provider_name = settings.multimodal_provider if tier == "multimodal" else settings.provider
+        provider_name = settings.video_provider if tier == "multimodal" else settings.persona_provider
         return settings.is_configured_for(tier) and provider_name in PROVIDERS
 
     def provider_for(self, tier: str) -> ModelProvider:
-        provider_name = settings.multimodal_provider if tier == "multimodal" else settings.provider
+        provider_name = settings.video_provider if tier == "multimodal" else settings.persona_provider
         factory = PROVIDERS.get(provider_name)
         if factory is None:
-            config_key = "MULTIMODAL_PROVIDER" if tier == "multimodal" else "AI_PROVIDER"
+            config_key = "VIDEO_PROVIDER" if tier == "multimodal" else "PERSONA_PROVIDER"
             raise AINotConfiguredError(
                 f"Unknown {config_key} '{provider_name}'. "
                 f"Expected one of: {', '.join(sorted(PROVIDERS))}, or 'mock'.",
             )
-        if provider_name == "huggingface":
-            token = settings.hf_token
-            if not token.strip():
-                raise AINotConfiguredError("HF_TOKEN is empty (required for huggingface provider).")
-            return factory(token)
-        if not settings.api_key.strip():
-            raise AINotConfiguredError("AI_API_KEY is empty.")
-        return factory(settings.api_key)
+        
+        if tier == "multimodal":
+            key = settings.gemini_api_key
+            if not key.strip():
+                raise AINotConfiguredError("GEMINI_API_KEY is empty.")
+            return factory(key)
+        else:
+            key = settings.openai_api_key
+            if not key.strip():
+                raise AINotConfiguredError("OPENAI_API_KEY is empty.")
+            return factory(key)
 
     def model_for(self, tier: str) -> str:
-        return settings.multimodal_model if tier == "multimodal" else settings.reasoning_model
+        return settings.video_model if tier == "multimodal" else settings.persona_model
 
     # -- generation -------------------------------------------------------
 
