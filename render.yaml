@@ -32,6 +32,8 @@ services:
     envVars:
       - key: NODE_ENV
         value: production
+      - key: NODE_VERSION
+        value: "20"
       - key: AI_SERVICE_URL
         fromService:
           type: web
@@ -51,6 +53,8 @@ services:
         source: /*
         destination: /index.html
     envVars:
+      - key: NODE_VERSION
+        value: "20"
       - key: BACKEND_URL
         fromService:
           type: web
