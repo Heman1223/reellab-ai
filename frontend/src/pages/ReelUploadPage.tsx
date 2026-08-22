@@ -1,10 +1,10 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import type { DragEvent } from 'react';
 
 import { Badge, Button, Card, ErrorNote, Loading, MockBanner, PageHeader } from '@/components/ui';
 import { useAsync } from '@/hooks/useAsync';
 import { useLabState } from '@/hooks/useLabState';
-import { analyzeReel, uploadReel } from '@/services/reellabApi';
+import { analyzeReel, uploadReel, getConfig } from '@/services/reellabApi';
 import { cn, fileSize, percent, seconds } from '@/utils/format';
 
 /**
@@ -14,10 +14,17 @@ export default function ReelUploadPage() {
   const { reel, contentDna, setReel, setContentDna, audienceDescription, setAudienceDescription } = useLabState();
   const [file, setFile] = useState<File | null>(null);
   const [isDragging, setIsDragging] = useState(false);
+  const [maxUploadMb, setMaxUploadMb] = useState<number>(100);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const upload = useAsync(uploadReel);
   const analyze = useAsync(analyzeReel);
+
+  useEffect(() => {
+    getConfig().then(res => {
+      if (res.data) setMaxUploadMb(res.data.maxUploadMb);
+    }).catch(console.error);
+  }, []);
 
   async function submit() {
     if (!file) return;
@@ -40,12 +47,27 @@ export default function ReelUploadPage() {
     setIsDragging(false);
   };
 
+  const checkFile = (dropped: File) => {
+    if (dropped.size > maxUploadMb * 1024 * 1024) {
+      alert(`File size exceeds the limit of ${maxUploadMb}MB`);
+      return;
+    }
+    setFile(dropped);
+  };
+
   const handleDrop = (e: DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     setIsDragging(false);
     const dropped = e.dataTransfer.files?.[0];
     if (dropped && dropped.type.startsWith('video/')) {
-      setFile(dropped);
+      checkFile(dropped);
+    }
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const selected = e.target.files?.[0];
+    if (selected) {
+      checkFile(selected);
     }
   };
 
@@ -95,7 +117,7 @@ export default function ReelUploadPage() {
             ref={fileInputRef}
             type="file"
             accept="video/*"
-            onChange={(event) => setFile(event.target.files?.[0] ?? null)}
+            onChange={handleFileChange}
             className="hidden"
           />
           {file ? (
@@ -106,7 +128,7 @@ export default function ReelUploadPage() {
           ) : (
             <div className="text-center">
               <p className="text-sm font-medium text-slate-900">Click to upload or drag and drop</p>
-              <p className="mt-1 text-xs text-slate-500">MP4, MOV, WEBM up to 100MB</p>
+              <p className="mt-1 text-xs text-slate-500">MP4, MOV, WEBM up to {maxUploadMb}MB</p>
             </div>
           )}
         </div>

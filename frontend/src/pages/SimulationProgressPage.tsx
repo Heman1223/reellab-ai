@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { Button, Card, ErrorNote, PageHeader } from '@/components/ui';
 import { useAsync } from '@/hooks/useAsync';
 import { useLabState } from '@/hooks/useLabState';
-import { runSimulation, discoverAudience } from '@/services/reellabApi';
+import { runSimulation } from '@/services/reellabApi';
 import { cn } from '@/utils/format';
 
 /**
@@ -18,7 +18,7 @@ const STAGES = [
 ] as const;
 
 export default function SimulationProgressPage() {
-  const { reel, contentDna, graph, setSimulation, setGraph, audienceDescription } = useLabState();
+  const { reel, contentDna, setSimulation, audienceDescription } = useLabState();
   const [stage, setStage] = useState(-1);
   const [setupError, setSetupError] = useState<string | null>(null);
 
@@ -40,29 +40,15 @@ export default function SimulationProgressPage() {
   async function start() {
     setSetupError(null);
     setIsRunning(true);
-    let currentGraphId = graph?.graphId;
-    let segmentsCount = graph?.segments?.length || 1;
 
     try {
-      // 1. Discover Audience
-      setStage(0); // discovering_audience
-      const audienceRes = await discoverAudience({ targetAudience: audienceDescription ?? undefined });
-      if (audienceRes) {
-        setGraph(audienceRes.data);
-        currentGraphId = audienceRes.data.graphId;
-        segmentsCount = audienceRes.data.segments?.length || 1;
-      }
+      setStage(0); // discovering_audience is now done server-side
       
-      const personasPerSegment = Math.ceil(10 / Math.max(1, segmentsCount));
-
-      // 2. Run Simulation
-      setStage(1); // will progress automatically via timer, but advance here too
+      // Run Simulation — server side discovers audience dynamically from ContentDNA + customAudience
       const result = await simulation.run({
         reelId: reel?.id ?? 'reel_001',
         contentDna: contentDna ?? undefined,
-        graphId: currentGraphId,
-        depth: 'standard', // fixed depth for presentation
-        personasPerSegment,
+        customAudience: audienceDescription ?? undefined,
       });
 
       if (result) {

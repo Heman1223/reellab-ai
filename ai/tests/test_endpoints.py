@@ -89,7 +89,7 @@ def test_video_analyze_requires_a_source():
 
 
 def test_simulation_run_returns_a_complete_result():
-    response = client.post("/ai/simulation/run", json={"reelId": "reel_001", "depth": "quick"})
+    response = client.post("/ai/simulation/run", json={"reelId": "reel_001"})
 
     assert response.status_code == 200
     body = response.json()

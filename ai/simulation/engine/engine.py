@@ -37,6 +37,7 @@ from dataclasses import dataclass
 from datetime import datetime, timezone
 
 from audience.segmentation.segmentation import targetable_segments
+from audience.discovery.discovery import discover_audience
 from config import settings
 from logging_utils import get_logger, log_event
 from personas.generation.generator import generate_personas
@@ -44,6 +45,7 @@ from personas.profiles.profiles import select_within_budget
 from propagation.engine.propagation import simulate_propagation
 from schemas import (
     AudienceGraph,
+    AudienceRequest,
     AudienceSegment,
     ContentDNA,
     Persona,
@@ -68,9 +70,7 @@ import fixtures
 
 logger = get_logger("simulation.engine")
 
-#: Personas per segment for each depth. With 3-4 leaf segments this lands a
-#: standard run at roughly 12-16 personas — the 10-20 band the budget assumes.
-DEPTH_PERSONAS_PER_SEGMENT = {"quick": 2, "standard": 4, "deep": 8}
+
 
 #: Cap on concurrent model calls. Personas are embarrassingly parallel, but
 #: firing forty at once is a good way to meet a rate limit mid-demo.
@@ -79,26 +79,14 @@ DEFAULT_CONCURRENCY = int(os.getenv("AI_SIM_CONCURRENCY", "8"))
 
 @dataclass
 class SimulationOptions:
-    """Cost and behaviour levers for one run.
+    """Cost and behaviour levers for one run."""
 
-    Every knob the brief asks to be controllable lives here rather than being
-    read from the environment deep inside a function, so a caller (and a test)
-    can set them explicitly.
-    """
-
-    depth: str = "standard"
-    personas_per_segment: int | None = None
     max_personas: int | None = None
     concurrency: int = DEFAULT_CONCURRENCY
     seed: int | None = None
     #: Skip the AI reflection pass. Useful for a cheap re-simulation of a
     #: counterfactual variant, where only the score delta is wanted.
     explain_bottlenecks: bool = True
-
-    def per_segment(self) -> int:
-        if self.personas_per_segment is not None:
-            return max(1, self.personas_per_segment)
-        return DEPTH_PERSONAS_PER_SEGMENT.get(self.depth, 4)
 
     def ceiling(self) -> int:
         return max(1, self.max_personas or settings.max_personas)
@@ -453,33 +441,50 @@ async def run_simulation(
     content: ContentDNA | None = None,
     graph: AudienceGraph | None = None,
 ) -> tuple[SimulationResult, bool]:
-    """Resolve an audience, generate personas, and simulate. Returns `(result, mock)`.
-
-    **Signature frozen** — Developer 2's counterfactual module calls this.
-
-    Raises `RuntimeError` only when not a single persona could be produced for
-    any segment, which the router turns into a 422. Every lesser failure comes
-    back inside the result.
-    """
-    options = SimulationOptions(depth=request.depth, personas_per_segment=request.personas_per_segment, seed=None)
+    """Resolve an audience, generate personas, and simulate. Returns `(result, mock)`."""
+    options = SimulationOptions(seed=None)
 
     content_dna = content or request.content_dna
-    audience_graph = graph or fixtures.audience_graph()
-    any_mock = graph is None and content is None and request.content_dna is None
+    any_mock = False
+
+    audience_graph = graph
+    if not audience_graph:
+        if content_dna or request.custom_audience:
+            audience_req = AudienceRequest(
+                niche=request.custom_audience or (content_dna.topic if content_dna else "Video Content"),
+                target_audience=request.custom_audience or "General Audience",
+                location="Global",
+                language="English",
+                creator_goal="Maximize engagement and reach"
+            )
+            audience_graph, amock = await discover_audience(audience_req)
+            any_mock = any_mock or amock
+        else:
+            audience_graph = fixtures.audience_graph()
+            any_mock = True
 
     segments = targetable_segments(audience_graph) or audience_graph.segments
-    per_segment = options.per_segment()
+    
+    # We want exactly 10 personas total.
+    total_personas = 10
+    if not segments:
+        raise RuntimeError("No targetable segments found in audience graph.")
+        
+    base_count = total_personas // len(segments)
+    remainder = total_personas % len(segments)
 
     personas: list[Persona] = []
     generation_warnings: list[Warning] = []
 
-    async def _generate_for_segment(segment):
+    async def _generate_for_segment(segment: AudienceSegment, count: int):
+        if count <= 0:
+            return [], False, None
         try:
             generated, mock = await generate_personas(
-                segment, per_segment, audience_graph.request.creator_goal
+                segment, count, audience_graph.request.creator_goal
             )
             return generated, mock, None
-        except Exception as exc:  # noqa: BLE001 — one bad segment is not a failed run
+        except Exception as exc:  # noqa: BLE001
             log_event(
                 logger,
                 "persona_generation_failed",
@@ -492,24 +497,17 @@ async def run_simulation(
                 severity="warning",
             )
 
-    results = await asyncio.gather(*(_generate_for_segment(s) for s in segments))
+    tasks = []
+    for i, s in enumerate(segments):
+        count = base_count + (1 if i < remainder else 0)
+        tasks.append(_generate_for_segment(s, count))
+
+    results = await asyncio.gather(*tasks)
     for gen, mock, warn in results:
         personas.extend(gen)
         any_mock = any_mock or mock
         if warn:
             generation_warnings.append(warn)
-
-    if not personas:
-        any_mock = True
-        for segment in segments:
-            personas.extend(fixtures.personas_for_segment(segment.id, per_segment))
-        generation_warnings.append(
-            Warning(
-                code="BENCHMARK_PERSONAS_USED",
-                message="AI persona generation timed out or failed; simulated using calibrated benchmark personas.",
-                severity="info",
-            )
-        )
 
     result, mock = await run_simulation_for_personas(
         personas,

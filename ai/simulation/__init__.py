@@ -29,7 +29,6 @@ from .behavior.aggregation import (
 )
 from .behavior.reflection import analyze_bottlenecks, detect_signals
 from .engine.engine import (
-    DEPTH_PERSONAS_PER_SEGMENT,
     SimulationOptions,
     run_simulation,
     run_simulation_for_personas,
@@ -41,7 +40,6 @@ __all__ = [
     "run_simulation",
     "run_simulation_for_personas",
     "SimulationOptions",
-    "DEPTH_PERSONAS_PER_SEGMENT",
     "aggregate_segment",
     "analyse_audience",
     "AudienceAnalysis",

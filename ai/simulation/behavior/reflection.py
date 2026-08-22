@@ -106,7 +106,7 @@ def detect_signals(
                     f"{len(early_leavers)} of {len(succeeded)} personas left within "
                     f"{cutoff:.1f}s — before the hook finished."
                 ),
-                severity=round(min(1.0, early_fraction * 1.2), 4),
+                severity=round(max(0.0, min(1.0, early_fraction * 1.2)), 4),
                 evidence=_quotes(early_leavers),
             )
         )
@@ -126,7 +126,7 @@ def detect_signals(
                         f"{segment.segment_name}: {segment.average_watch_probability:.0%} start "
                         f"watching but only {segment.average_completion_probability:.0%} finish."
                     ),
-                    severity=round(min(1.0, gap * 2), 4),
+                    severity=round(max(0.0, min(1.0, gap * 2)), 4),
                 )
             )
 
@@ -143,7 +143,7 @@ def detect_signals(
                     f"Personas stay ({mean_watch:.0%} watch) but do not finish "
                     f"({mean_completion:.0%} complete). The middle does not pay off."
                 ),
-                severity=round(min(1.0, (mean_watch - mean_completion) * 1.5), 4),
+                severity=round(max(0.0, min(1.0, (mean_watch - mean_completion) * 1.5)), 4),
                 evidence=_quotes(succeeded),
             )
         )
@@ -165,7 +165,7 @@ def detect_signals(
                         f"{len(finishers)} personas reach the end but peak engagement "
                         f"is only {engagement:.0%}. Nothing converts the attention."
                     ),
-                    severity=round(min(1.0, 1.0 - engagement * 4), 4),
+                    severity=round(max(0.0, min(1.0, 1.0 - engagement * 4)), 4),
                     evidence=_quotes(finishers),
                 )
             )
@@ -192,7 +192,7 @@ def detect_signals(
                     f"Mean share probability is {mean_share:.0%}, so the reel converts "
                     f"through saves rather than shares.{wave_note}"
                 ),
-                severity=round(min(1.0, 1.0 - mean_share * 5), 4),
+                severity=round(max(0.0, min(1.0, 1.0 - mean_share * 5)), 4),
                 evidence=_quotes(succeeded),
             )
         )
@@ -209,7 +209,7 @@ def detect_signals(
                         f"{segment.segment_name} scores {segment.score:.2f} — this segment "
                         "is not being reached at all."
                     ),
-                    severity=round(min(1.0, 1.0 - segment.score * 2), 4),
+                    severity=round(max(0.0, min(1.0, 1.0 - segment.score * 2)), 4),
                 )
             )
 

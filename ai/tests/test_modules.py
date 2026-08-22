@@ -164,7 +164,7 @@ def test_propagation_with_no_persona_results_returns_nothing():
 
 def test_run_simulation_end_to_end_in_mock_mode():
     result, mock = asyncio.run(
-        run_simulation(SimulationRequest(reel_id="reel_001", depth="quick"))
+        run_simulation(SimulationRequest(reel_id="reel_001"))
     )
 
     assert mock is True
@@ -179,11 +179,9 @@ def test_run_simulation_end_to_end_in_mock_mode():
     assert any(warning.code == "MOCK_DATA" for warning in result.warnings)
 
 
-def test_simulation_depth_changes_persona_count():
-    quick, _ = asyncio.run(run_simulation(SimulationRequest(reel_id="r", depth="quick")))
-    deep, _ = asyncio.run(run_simulation(SimulationRequest(reel_id="r", depth="deep")))
-
-    assert len(deep.audience_results) >= len(quick.audience_results)
+def test_simulation_forces_10_personas():
+    result, _ = asyncio.run(run_simulation(SimulationRequest(reel_id="r")))
+    assert len(result.audience_results) <= 10
 
 
 # --- counterfactual ---------------------------------------------------------

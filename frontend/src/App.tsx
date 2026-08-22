@@ -4,7 +4,6 @@ import ReelUploadPage from '@/pages/ReelUploadPage';
 import SimulationProgressPage from '@/pages/SimulationProgressPage';
 import ResultsDashboardPage from '@/pages/ResultsDashboardPage';
 import PersonaResultsPage from '@/pages/PersonaResultsPage';
-import PropagationPage from '@/pages/PropagationPage';
 import ExperimentsPage from '@/pages/ExperimentsPage';
 import ComparisonPage from '@/pages/ComparisonPage';
 import { useLabState } from '@/hooks/useLabState';
@@ -33,7 +32,6 @@ export default function App() {
           <section id="results" className="scroll-mt-12 space-y-16 border-t border-ink-700 pt-16">
             <ResultsDashboardPage />
             <PersonaResultsPage />
-            <PropagationPage />
             <div id="experiments" className="scroll-mt-12 border-t border-ink-700 pt-16">
               <ExperimentsPage />
             </div>

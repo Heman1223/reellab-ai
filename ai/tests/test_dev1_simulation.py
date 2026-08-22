@@ -281,11 +281,11 @@ def test_simulation_works_with_no_content_dna_and_says_so():
     assert any(w.code == "MOCK_CONTENT_DNA" for w in result.warnings)
 
 
-def test_depth_controls_persona_count():
-    quick, _ = run(run_simulation(SimulationRequest(reel_id="r", depth="quick")))
-    deep, _ = run(run_simulation(SimulationRequest(reel_id="r", depth="deep")))
+def test_fixed_10_personas():
+    result, _ = run(run_simulation(SimulationRequest(reel_id="r")))
 
-    assert len(deep.audience_results) >= len(quick.audience_results)
+    # Engine always targets exactly 10 personas (may be fewer if some fail)
+    assert len(result.audience_results) <= 10
 
 
 def test_request_signature_developer_2_depends_on_is_intact():
@@ -746,11 +746,10 @@ def test_rank_from_scores_orders_best_first_and_carries_confidence():
 # 11. Cost control
 # ===========================================================================
 
-def test_simulation_options_map_depth_to_persona_count():
-    assert SimulationOptions(depth="quick").per_segment() == 2
-    assert SimulationOptions(depth="standard").per_segment() == 4
-    assert SimulationOptions(depth="deep").per_segment() == 8
-    assert SimulationOptions(personas_per_segment=3).per_segment() == 3
+def test_simulation_options_ceiling():
+    from config import settings
+    assert SimulationOptions().ceiling() == max(1, settings.max_personas)
+    assert SimulationOptions(max_personas=5).ceiling() == 5
 
 
 def test_persona_ceiling_trims_an_oversized_run():

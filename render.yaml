@@ -17,6 +17,11 @@ services:
         value: meta-llama/llama-3.1-70b-instruct
       - key: OPENAI_API_BASE
         value: https://openrouter.ai/api/v1/chat/completions
+      - key: BACKEND_URL
+        fromService:
+          type: web
+          name: reellab-backend
+          envVarKey: RENDER_EXTERNAL_URL
       - key: OPENAI_API_KEY
         sync: false
       - key: GEMINI_API_KEY

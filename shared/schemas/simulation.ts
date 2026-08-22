@@ -29,12 +29,6 @@ export type SimulationStatus =
   | 'failed'
   | 'partial';
 
-/**
- * How much to spend on a run. The engine maps depth to persona count and
- * model tier — see the cost-aware notes in docs/architecture.md.
- */
-export type SimulationDepth = 'quick' | 'standard' | 'deep';
-
 /** Request body for `POST /api/v1/simulation/run`. */
 export interface SimulationRequest {
   /** Reel to simulate. Either this or `contentDna` must be provided. */
@@ -45,9 +39,8 @@ export interface SimulationRequest {
   graphId?: string;
   /** Explicit persona ids; when omitted the engine selects from the graph. */
   personaIds?: string[];
-  depth?: SimulationDepth;
-  /** Explicitly request a specific number of personas per segment. */
-  personasPerSegment?: number;
+  /** Optional creator-defined audience description (e.g. "Indian developers learning AI"). */
+  customAudience?: string;
   /** Set when this run evaluates a counterfactual variant. */
   variantId?: string;
 }

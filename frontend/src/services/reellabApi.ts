@@ -34,6 +34,13 @@ import type { ApiResult } from '@/services/apiClient';
  * looks finished and breaks on integration day.
  */
 
+export async function getConfig(): Promise<ApiResult<{ maxUploadMb: number }>> {
+  if (USE_MOCKS) {
+    return delay({ data: { maxUploadMb: 100 }, mock: true }, 200);
+  }
+  return apiClient.get<{ maxUploadMb: number }>('/config');
+}
+
 export async function discoverAudience(
   request: Partial<AudienceRequest>,
 ): Promise<ApiResult<AudienceGraph>> {

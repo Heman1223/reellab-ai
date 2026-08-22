@@ -22,7 +22,6 @@ SimulationStatus = Literal[
     "partial",
 ]
 
-SimulationDepth = Literal["quick", "standard", "deep"]
 
 
 class SimulationRequest(ReelLabModel):
@@ -31,8 +30,7 @@ class SimulationRequest(ReelLabModel):
     content_dna: ContentDNA | None = None
     graph_id: str | None = None
     persona_ids: list[str] = Field(default_factory=list)
-    depth: SimulationDepth = "standard"
-    personas_per_segment: int | None = None
+    custom_audience: str | None = None
     variant_id: str | None = None
 
 
