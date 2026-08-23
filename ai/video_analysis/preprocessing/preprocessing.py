@@ -203,11 +203,11 @@ def extract_media(video_path: str | Path, max_frames: int = 5) -> ExtractedMedia
 
         audio_path = None
         if has_audio:
-            out_audio = temp_path / "audio.mp3"
+            out_audio = temp_path / "audio.wav"
             cmd_audio = [
                 "ffmpeg", "-y", "-v", "error",
                 "-i", str(path),
-                "-vn", "-ac", "1", "-ar", "16000", "-b:a", "32k",
+                "-vn", "-ac", "1", "-ar", "16000",
                 str(out_audio)
             ]
             _run_subprocess(cmd_audio, "Failed to extract audio track")
