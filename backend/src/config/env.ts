@@ -50,7 +50,7 @@ export const config = {
   uploadDir: path.isAbsolute(str('UPLOAD_DIR', 'uploads'))
     ? str('UPLOAD_DIR', 'uploads')
     : path.join(REPO_ROOT, str('UPLOAD_DIR', 'uploads')),
-  maxUploadBytes: int('MAX_UPLOAD_MB', 100) * 1024 * 1024,
+  maxUploadBytes: int('MAX_UPLOAD_MB', 500) * 1024 * 1024,
 
   logLevel: str('LOG_LEVEL', 'info'),
 } as const;

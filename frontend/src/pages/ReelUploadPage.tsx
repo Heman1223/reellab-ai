@@ -14,7 +14,7 @@ export default function ReelUploadPage() {
   const { reel, contentDna, setReel, setContentDna, audienceDescription, setAudienceDescription } = useLabState();
   const [file, setFile] = useState<File | null>(null);
   const [isDragging, setIsDragging] = useState(false);
-  const [maxUploadMb, setMaxUploadMb] = useState<number>(100);
+  const [maxUploadMb, setMaxUploadMb] = useState<number>(500);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const upload = useAsync(uploadReel);
