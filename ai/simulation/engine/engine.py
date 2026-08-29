@@ -74,7 +74,7 @@ logger = get_logger("simulation.engine")
 
 #: Cap on concurrent model calls. Personas are embarrassingly parallel, but
 #: firing forty at once is a good way to meet a rate limit mid-demo.
-DEFAULT_CONCURRENCY = int(os.getenv("AI_SIM_CONCURRENCY", "8"))
+DEFAULT_CONCURRENCY = int(os.getenv("AI_SIM_CONCURRENCY", "2"))
 
 
 @dataclass

@@ -556,7 +556,7 @@ class QuotaExhaustedError(ReelLabAIError):
 
 #: Transient statuses worth another attempt. 429 is handled separately because
 #: a exhausted daily quota is not something backoff can fix.
-RETRYABLE_STATUS = {500, 502, 503, 529}
+RETRYABLE_STATUS = {429, 500, 502, 503, 529}
 
 
 def _retry_delay(body: dict[str, Any]) -> float | None:
@@ -928,7 +928,7 @@ class LLMClient:
                     timeout=float(settings.request_timeout_seconds),
                     media=media,
                 )
-            except ProviderOverloadedError as exc:
+            except (ProviderOverloadedError, QuotaExhaustedError) as exc:
                 last = exc
                 if attempt + 1 < OVERLOAD_ATTEMPTS:
                     delay = OVERLOAD_BACKOFF_SECONDS * (2**attempt)
