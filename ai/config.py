@@ -65,8 +65,8 @@ def _first_set(*keys: str, default: str = "") -> str:
 _api_key = _first_set("GEMINI_API_KEY", "AI_API_KEY")
 _provider = _first_set("AI_PROVIDER", default="mock")
 _multimodal_provider = _first_set("VIDEO_PROVIDER", "MULTIMODAL_PROVIDER", "AI_PROVIDER", default="mock")
-_multimodal_model = _first_set("VIDEO_MODEL", "MULTIMODAL_MODEL", default="gemini-1.5-flash")
-_reasoning_model = _first_set("REASONING_MODEL", default="gemini-1.5-flash")
+_multimodal_model = _first_set("VIDEO_MODEL", "MULTIMODAL_MODEL", default="gemini-3.7-flash")
+_reasoning_model = _first_set("REASONING_MODEL", default="gemini-3.7-flash")
 
 
 @dataclass(frozen=True)
